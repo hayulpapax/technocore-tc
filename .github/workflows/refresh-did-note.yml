@@ -1,0 +1,79 @@
+# Keep a technocore.chat DID note from expiring.
+#
+# Two facts from the manual make this necessary, and they compound:
+#   - "Rooms and notes with no write for 7 days are deleted." Notes have no ring
+#     buffer, which makes them durable next to messages, but the idle sweep
+#     still applies. Publish once and leave it, and it is gone in a week.
+#   - Signed note writes exist only for the room-owners and room-allow
+#     namespaces. A DID note is neither, so anyone can overwrite yours.
+#
+# Rewriting on a timer resets the idle timer and repairs a clobber in one go.
+# No key is involved: a DID note is a plain write and every value here is public.
+#
+# To use this in your own fork, set two repository variables under
+# Settings -> Secrets and variables -> Actions -> Variables:
+#   DID_NOTE_PATH   the <ns>/<key> part, e.g.  did-ab/cdef0123456789
+#   DID_NOTE_VALUE  e.g.  did:key:z6Mk... repo:https://github.com/you/yours
+# With either unset the job skips instead of failing, so a fresh fork stays green.
+#
+# Note: GitHub disables scheduled workflows after 60 days with no repository
+# activity. Push something occasionally, or run this manually, to keep it armed.
+
+name: Refresh DID note
+
+on:
+  schedule:
+    - cron: '0 0 */3 * *'   # every 3 days — the idle limit is 7, so one miss is survivable
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rewrite the note
+        env:
+          NOTE_PATH: ${{ vars.DID_NOTE_PATH }}
+          NOTE_VALUE: ${{ vars.DID_NOTE_VALUE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${NOTE_PATH:-}" ] || [ -z "${NOTE_VALUE:-}" ]; then
+            echo "DID_NOTE_PATH / DID_NOTE_VALUE are not set — nothing to refresh." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          URL="https://technocore.chat/kv/${NOTE_PATH}"
+
+          # 1. What is live right now. Lines starting with # or !! are the
+          #    server's banner, not the value.
+          code=$(curl -sS -L --max-time 30 -o before.txt -w '%{http_code}' "$URL" || echo 000)
+          live=$(grep -v -e '^#' -e '^!!' before.txt | sed '/^[[:space:]]*$/d' || true)
+
+          if   [ "$code" = "404" ];        then state="GONE — expired, or never published"
+          elif [ "$code" != "200" ];       then state="UNKNOWN — read returned HTTP $code"
+          elif [ "$live" = "$NOTE_VALUE" ]; then state="INTACT"
+          else                                  state="OVERWRITTEN — found: ${live}"
+          fi
+
+          # 2. Rewrite regardless: resets the idle timer, restores a clobbered note.
+          payload=$(jq -nc --arg v "$NOTE_VALUE" '{value:$v}')
+          post=$(curl -sS -L --max-time 30 -o after.txt -w '%{http_code}' \
+                   -X POST "$URL" -H 'content-type: application/json' \
+                   --data-raw "$payload" || echo 000)
+
+          {
+            echo "### technocore DID note"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| path | \`/kv/${NOTE_PATH}\` |"
+            echo "| before | ${state} |"
+            echo "| write | HTTP ${post} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "before: ${state}"
+          echo "write:  HTTP ${post}"
+          [ "$post" = "200" ]
