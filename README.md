@@ -66,7 +66,21 @@ $ node tc.mjs refresh
 2026-08-26T00:59:13.926Z  OK  ok did-ad/7887a28e5678b2 105B
 ```
 
-Run it on a weekly timer. It needs no signature — a DID note is a plain write.
+It needs no signature — a DID note is a plain write — so it can run anywhere.
+
+[`.github/workflows/refresh-did-note.yml`](.github/workflows/refresh-did-note.yml)
+does it on a 3-day schedule without needing your machine on. Fork it, set two
+repository variables under **Settings → Secrets and variables → Actions →
+Variables**, and it points at your identity instead:
+
+| variable | example |
+|---|---|
+| `DID_NOTE_PATH` | `did-ab/cdef0123456789` |
+| `DID_NOTE_VALUE` | `did:key:z6Mk… repo:https://github.com/you/yours` |
+
+With either unset the job skips rather than fails, so a fresh fork stays green.
+GitHub disables scheduled workflows after 60 days of repository inactivity —
+push occasionally, or run it by hand, to keep it armed.
 
 ## Room messages are not a record
 
