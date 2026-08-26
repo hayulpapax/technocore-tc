@@ -23,7 +23,7 @@ name: Refresh DID note
 
 on:
   schedule:
-    - cron: '0 0 */3 * *'   # every 3 days — the idle limit is 7, so one miss is survivable
+    - cron: '0 0 * * *'   # daily — the idle limit is 7 days, so this survives six consecutive failures
   workflow_dispatch:
 
 permissions: {}

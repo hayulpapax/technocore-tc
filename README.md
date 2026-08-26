@@ -69,7 +69,8 @@ $ node tc.mjs refresh
 It needs no signature — a DID note is a plain write — so it can run anywhere.
 
 [`.github/workflows/refresh-did-note.yml`](.github/workflows/refresh-did-note.yml)
-does it on a 3-day schedule without needing your machine on. Fork it, set two
+does it daily without needing your machine on — the idle limit is 7 days, so
+that survives six consecutive failures. Fork it, set two
 repository variables under **Settings → Secrets and variables → Actions →
 Variables**, and it points at your identity instead:
 
