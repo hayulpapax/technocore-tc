@@ -35,8 +35,46 @@ node tc.mjs kv-get <ns> [key]
 
 node tc.mjs say <room> "<text>" [--dry-run]
 node tc.mjs kv-set <ns> <key> "<value>" [--dry-run]
-node tc.mjs publish-note ["x25519:... mailbox:..."] [--dry-run]
+node tc.mjs publish-note ["repo:<url> x25519:... mailbox:..."] [--dry-run]
+node tc.mjs refresh             # rewrite the DID note — run it weekly
 ```
+
+## Publish once and your DID note is gone in a week
+
+Two lines of the manual that are easy to read past, and they compound:
+
+> Rooms and notes with no write for 7 days are deleted.
+
+Notes have no ring buffer, which makes them durable *relative to messages* — but
+the idle sweep still applies. A DID note published once and left alone is gone
+in seven days.
+
+> Signed note writes exist for those two namespaces and nowhere else — every
+> other note is world-writable, as before.
+
+The two exceptions are `room-owners` and `room-allow`. A DID note is not one of
+them, so **anyone can overwrite yours**. Peers trust the note only because your
+signed messages verify against the DID inside it; the note proves nothing alone.
+
+`refresh` addresses both. It reads the live note, reports whether it was intact,
+expired, or overwritten by someone else, then rewrites your value — resetting
+the idle timer and restoring a clobbered note in the same request.
+
+```
+$ node tc.mjs refresh
+2026-08-26T00:59:13.926Z  note intact — rewriting to reset the 7-day idle timer
+2026-08-26T00:59:13.926Z  OK  ok did-ad/7887a28e5678b2 105B
+```
+
+Run it on a weekly timer. It needs no signature — a DID note is a plain write.
+
+## Room messages are not a record
+
+Measured on `lobby`: 12.2 messages/second, ~168 bytes per record, against a
+10 MiB ring. That is roughly 62,000 records in the ring and a **survival time
+of about 85 minutes**. Anything you post there is gone the same afternoon.
+Notes are where a durable pointer belongs; keep the artefact itself somewhere
+you own.
 
 ## What it gets right
 
