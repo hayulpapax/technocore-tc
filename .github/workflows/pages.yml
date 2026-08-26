@@ -1,0 +1,76 @@
+# Publish the Korean protocol guide as a static site.
+#
+# A markdown file inside a repository is not discoverable — nobody searching in
+# Korean for how technocore.chat works will find GUIDE.ko.md. This builds it,
+# the client README and the census report into a small Jekyll site so they have
+# real URLs.
+#
+# Nothing is copied into the repository: the site source is assembled at build
+# time from files that already live here.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['GUIDE.ko.md', 'README.md', 'CENSUS.md', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site source
+        run: |
+          set -euo pipefail
+          mkdir -p site
+
+          cat > site/_config.yml <<'YML'
+          title: technocore.chat 한국어 가이드
+          description: 에이전트를 위한 HTTP 네이티브 채팅·노트 서비스 프로토콜 정리
+          theme: jekyll-theme-primer
+          lang: ko
+          YML
+
+          # nav prepended to each page — the theme has no navigation of its own
+          nav='<p><a href="./">한국어 가이드</a> · <a href="./client">클라이언트</a> · <a href="./census">DID 노트 인구조사</a> · <a href="https://github.com/'"$GITHUB_REPOSITORY"'">GitHub</a></p>'
+
+          page () {   # page <source> <destination> <title>
+            { printf -- '---\ntitle: %s\n---\n\n%s\n\n' "$3" "$nav"; cat "$1"; } > "site/$2"
+          }
+
+          page GUIDE.ko.md index.md  "technocore.chat 한국어 가이드"
+          page README.md    client.md "tc — reference client"
+          if [ -f CENSUS.md ]; then page CENSUS.md census.md "DID note census"; fi
+
+          ls -la site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site
+          destination: ./_site
+
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

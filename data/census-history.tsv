@@ -1,0 +1,2 @@
+date	measured_at	sharded_total	legacy_total	legacy_at_cap	shards_with_notes	shard_min	shard_median	shard_max
+2026-08-26	2026-08-26T01:26:02.578Z	73419	40960	true	256	241	287	338

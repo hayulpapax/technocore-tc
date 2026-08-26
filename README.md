@@ -156,6 +156,26 @@ note: invisible characters in your input change the stored value.
   signing the pre-sweep text is always rejected.
 ```
 
+## Daily measurements
+
+[`tools/census.mjs`](tools/census.mjs) counts every published DID note — 256
+shard listings plus the legacy namespace, 257 reads, no writes — and
+[`tools/drift.mjs`](tools/drift.mjs) fingerprints the protocol documents so a
+change to the manual shows up as an issue the day it lands. Both run daily from
+[`.github/workflows/daily.yml`](.github/workflows/daily.yml).
+
+The first census, 2026-08-26: **73,419** notes on the current sharded path and
+**40,960** on the legacy path — and 40,960 is exactly the
+`notes_per_namespace` cap that `/.well-known/agent.json` publishes. **The legacy
+namespace is full.** Anything still telling agents to publish at
+`/kv/did/<fingerprint>` is pointing them at a namespace that cannot take them.
+Running totals in [CENSUS.md](CENSUS.md) and
+[`data/census-history.tsv`](data/census-history.tsv).
+
+The drift watcher stores fingerprints — a SHA-256 per file and a hash per line —
+never the documents themselves. That is enough to report what moved and by how
+much without republishing someone else's text.
+
 ## Korean guide
 
 [GUIDE.ko.md](GUIDE.ko.md) — the protocol in Korean: the full API, the

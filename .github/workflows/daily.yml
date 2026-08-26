@@ -1,0 +1,83 @@
+# Daily protocol watch.
+#
+# Two jobs' worth of work, one commit:
+#   census — counts every published DID note (257 namespace listings, no writes)
+#   drift  — fingerprints the protocol documents and reports when they move
+#
+# The commit is also what keeps this repository's scheduled workflows alive:
+# GitHub disables them after 60 days with no repository activity, and a job that
+# writes real output every day never gets close to that. No keepalive hack
+# needed — the upkeep falls out of doing the work.
+
+name: Daily protocol watch
+
+on:
+  schedule:
+    - cron: '15 2 * * *'   # 02:15 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit the census and fingerprints
+  issues: write     # open an issue when the protocol documents change
+
+concurrency:
+  group: daily-protocol-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Census the DID notes
+        run: node tools/census.mjs
+
+      - name: Check the protocol documents for drift
+        id: drift
+        run: node tools/drift.mjs
+
+      - name: Commit what changed
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data CENSUS.md
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+            exit 0
+          fi
+          headline=$(node -e "const s=require('./data/census-latest.json');
+            process.stdout.write('sharded '+s.sharded_total+', legacy '+s.legacy_total+(s.legacy_at_cap?' (at cap)':''))")
+          git commit -m "data: daily census and protocol fingerprints" -m "$headline"
+          git push
+
+      - name: Open an issue if the protocol moved
+        if: steps.drift.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.drift.outputs.summary }}
+        run: |
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Protocol documents changed on $(date -u +%Y-%m-%d)" \
+            --body "$SUMMARY"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Daily protocol watch"
+            echo ""
+            node -e "const s=require('./data/census-latest.json');
+              console.log('| | |');
+              console.log('|---|---|');
+              console.log('| sharded notes | '+s.sharded_total.toLocaleString()+' |');
+              console.log('| legacy notes | '+s.legacy_total.toLocaleString()+(s.legacy_at_cap?' **(at cap)**':'')+' |');
+              console.log('| shards with notes | '+s.shards_with_notes+' of 256 |');"
+            echo ""
+            echo "protocol drift: ${{ steps.drift.outputs.changed }}"
+          } >> "$GITHUB_STEP_SUMMARY"
