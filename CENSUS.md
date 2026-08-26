@@ -6,11 +6,11 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-08-26T01:26:02.578Z**.
+Last measured **2026-08-26T01:28:54.007Z**.
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **73,419** (64.2%) |
+| current sharded path `/kv/did-<2>/<14>` | **73,467** (64.2%) |
 | legacy path `/kv/did/<16>` | **40,960** (35.8%) |
 | shards holding at least one note | 256 of 256 |
 | notes per shard | min 241, median 287, max 338 |
