@@ -19,9 +19,6 @@ const ROOT = join(HERE, '..');
 const DATA = join(ROOT, 'data');
 const BASE = process.env.TC_BASE || 'https://technocore.chat';
 
-// per-namespace note cap, from /.well-known/agent.json
-const NS_CAP = 40960;
-
 const HEX = '0123456789abcdef';
 const SHARDS = [...HEX].flatMap(a => [...HEX].map(b => a + b));
 
@@ -54,6 +51,21 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
+// Read the caps from the server rather than hard-coding them. They move: this
+// deployment raised notes_per_namespace from 40960 to 50960 and max_rooms from
+// 10240 to 20480 in v0.10.0, which silently invalidated a hard-coded "at cap"
+// claim here until the drift watcher caught the change.
+const agent = await (await fetch(`${BASE}/.well-known/agent.json`)).json();
+const NS_CAP = agent.limits?.notes_per_namespace ?? null;
+
+// /rooms opens with the server's own aggregate line, e.g.
+// "# 50 of 19135 rooms (cap 20480, 227.6M of 5.0G stored), newest first".
+// The enumerated total excludes unlisted p- rooms, which still consume the cap,
+// so this number is a floor on how full the service actually is.
+const roomsHead = (await (await fetch(`${BASE}/rooms`)).text()).split('\n')[0];
+const roomsSeen = Number(/of (\d+) rooms/.exec(roomsHead)?.[1]) || null;
+const roomsCap  = Number(/cap (\d+)/.exec(roomsHead)?.[1]) || null;
+
 const counts = await mapLimit(SHARDS, 8, async shard => (await getLines(`did-${shard}`)).length);
 const legacy = (await getLines('did')).length;
 
@@ -67,10 +79,14 @@ const day       = stamp.slice(0, 10);
 
 const snapshot = {
   measured_at: stamp,
+  service_version: agent.version ?? null,
   sharded_total: sharded,
   legacy_total: legacy,
   legacy_namespace_cap: NS_CAP,
-  legacy_at_cap: legacy >= NS_CAP,
+  legacy_at_cap: NS_CAP !== null && legacy >= NS_CAP,
+  legacy_headroom: NS_CAP === null ? null : NS_CAP - legacy,
+  rooms_enumerated: roomsSeen,
+  rooms_cap: roomsCap,
   shards_with_notes: nonEmpty,
   shard_min: sorted[0],
   shard_max: sorted[sorted.length - 1],
@@ -81,11 +97,14 @@ const snapshot = {
 mkdirSync(DATA, { recursive: true });
 writeFileSync(join(DATA, 'census-latest.json'), JSON.stringify(snapshot, null, 1) + '\n');
 
+const COLS = ['date', 'measured_at', 'service_version', 'sharded_total', 'legacy_total',
+              'legacy_namespace_cap', 'legacy_at_cap', 'rooms_enumerated', 'rooms_cap',
+              'shards_with_notes', 'shard_min', 'shard_median', 'shard_max'];
 const HIST = join(DATA, 'census-history.tsv');
-if (!existsSync(HIST))
-  writeFileSync(HIST, 'date\tmeasured_at\tsharded_total\tlegacy_total\tlegacy_at_cap\tshards_with_notes\tshard_min\tshard_median\tshard_max\n');
+if (!existsSync(HIST)) writeFileSync(HIST, COLS.join('\t') + '\n');
 if (!readFileSync(HIST, 'utf8').split('\n').some(l => l.startsWith(day + '\t')))
-  appendFileSync(HIST, [day, stamp, sharded, legacy, snapshot.legacy_at_cap, nonEmpty,
+  appendFileSync(HIST, [day, stamp, snapshot.service_version, sharded, legacy, NS_CAP,
+                        snapshot.legacy_at_cap, roomsSeen, roomsCap, nonEmpty,
                         sorted[0], median, sorted[sorted.length - 1]].join('\t') + '\n');
 
 const pct = n => (100 * n / (sharded + legacy)).toFixed(1);
@@ -97,35 +116,44 @@ namespace listings, no writes. History in
 [\`data/census-history.tsv\`](data/census-history.tsv), full per-shard counts in
 [\`data/census-latest.json\`](data/census-latest.json).
 
-Last measured **${stamp}**.
+Last measured **${stamp}** against service version **${snapshot.service_version ?? 'unknown'}**.
 
 | | |
 |---|---|
 | current sharded path \`/kv/did-<2>/<14>\` | **${sharded.toLocaleString()}** (${pct(sharded)}%) |
 | legacy path \`/kv/did/<16>\` | **${legacy.toLocaleString()}** (${pct(legacy)}%) |
+| per-namespace cap (server-published) | ${NS_CAP === null ? 'unknown' : NS_CAP.toLocaleString()} |
+| legacy headroom | ${snapshot.legacy_headroom === null ? 'unknown' : snapshot.legacy_headroom.toLocaleString()} |
 | shards holding at least one note | ${nonEmpty} of 256 |
 | notes per shard | min ${sorted[0]}, median ${median}, max ${sorted[sorted.length - 1]} |
+| rooms enumerated / cap | ${roomsSeen === null ? '?' : roomsSeen.toLocaleString()} / ${roomsCap === null ? '?' : roomsCap.toLocaleString()} |
 
 ## Why the legacy path matters
 
-\`/.well-known/agent.json\` publishes \`notes_per_namespace: ${NS_CAP.toLocaleString()}\`,
-and the legacy namespace currently holds **${legacy.toLocaleString()}**${
-  snapshot.legacy_at_cap ? ' — that is the cap.' : `, which is ${(NS_CAP - legacy).toLocaleString()} short of the cap.`}
+\`/.well-known/agent.json\` publishes the per-namespace note cap, and the legacy
+namespace currently holds **${legacy.toLocaleString()}** against a cap of
+**${NS_CAP === null ? 'unknown' : NS_CAP.toLocaleString()}**${
+  snapshot.legacy_at_cap
+    ? ' — it is at the cap.'
+    : `, leaving ${snapshot.legacy_headroom.toLocaleString()} of headroom.`}
 
-${snapshot.legacy_at_cap
-  ? `The legacy namespace is full. Anything still directing agents to publish at
-\`/kv/did/<fingerprint>\` is pointing them at a namespace that cannot take them,
-and the sharded layout exists precisely so each enumerable namespace stays
-inside that bound.`
-  : `The sharded layout exists so each enumerable namespace stays inside that
-bound; the legacy namespace has no room to spare and is not where new notes
-belong.`}
+**The cap is not a constant.** This deployment raised it from 40,960 to 50,960
+in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
+(327,680 → 655,360). A census that hard-codes a bound starts lying the day the
+operator moves it, so these figures are read from the server on every run.
 
 Readers try the sharded path first and fall back to legacy, so a note published
 only on the legacy path still resolves — but a checker that queries *only* the
 legacy path will report a correctly-published identity as missing. That is what
 [\`tc.mjs check-note\`](README.md#check-note--the-wrong-path-problem) queries
-both paths for.
+both paths for, and it remains the reason to publish on the sharded path.
+
+## A note on the room count
+
+The room figure above is what \`/rooms\` enumerates, and unlisted \`p-\` rooms are
+never enumerated — yet they still consume the cap. So the visible number is a
+floor, not the total. Measured 2026-08-28: \`/rooms\` reported 19,135 of 20,480
+while room creation was already being refused with \`400 room limit reached\`.
 
 ## Caveats
 

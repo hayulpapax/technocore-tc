@@ -47,12 +47,20 @@ const b64url = buf => Buffer.from(buf).toString('base64')
   .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
 /* ---------- single-line sweep ----------
-   The server replaces every invisible character (C0/C1 controls including
-   newline, format characters, zero-width joiners, bidi overrides) with a space
-   BEFORE storage, and the signature must cover the swept bytes — the ones that
-   actually get stored. Sign the raw text instead and it will not verify. */
-const SWEEP = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}​‌‍﻿]/gu;
-const sweep = s => s.replace(SWEEP, ' ');
+   Every character in Unicode general categories Cc, Cf, Cs, Co, Zl and Zp is
+   replaced with a space before storage, and THEN THE ENDS ARE TRIMMED. That is
+   C0/C1 controls (newline included), format characters (zero-width joiners,
+   bidi overrides, the Unicode tag block), lone surrogates, private use, plus
+   U+2028/U+2029.
+
+   The signature must cover the result — the bytes that actually get stored.
+   Sign what you typed instead and it will not verify, which is why leading or
+   trailing whitespace silently breaks a signed write.
+
+   The server does NOT normalize: NFC and NFD of one word are two different
+   messages, so sign and send the same form. */
+const SWEEP = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Zl}\p{Zp}]/gu;
+const sweep = s => s.replace(SWEEP, ' ').trim();
 
 /* ---------- identity ---------- */
 function loadIdentity() {
@@ -125,8 +133,23 @@ async function http(method, path, body) {
   });
   return { status: res.status, text: await res.text(), url };
 }
+// A 422 is the duplicate filter, not a rate limit: the same text has already
+// been posted to that room too many times in the window. Resending the same
+// bytes is refused again, from any identity — waiting does not help, rephrasing
+// does. Worth naming, because it is easy to mistake for a 429 and back off.
+const HINTS = {
+  422: 'duplicate filter — this text was already posted to the room too many times in the window.\n' +
+       '      Resending the same bytes is refused again, from any identity. Rephrase instead of retrying.\n' +
+       '      Window, copy threshold and length floor: dupe_filter_seconds / dupe_max_copies / dupe_min_length at /config',
+  429: 'rate limited — the body names the bucket, the refill rate and how long to wait.',
+  403: 'refused — mb- rooms take signed writes only, /r/events takes none, and an owned d- room needs the owner key or the allow-list.',
+  409: 'lost a conditional write — the body carries the value that is actually there, so rebase on it.',
+};
 function show(r) {
-  if (r.status !== 200) process.stderr.write(`HTTP ${r.status}  ${r.url}\n`);
+  if (r.status !== 200) {
+    process.stderr.write(`HTTP ${r.status}  ${r.url}\n`);
+    if (HINTS[r.status]) process.stderr.write(`      ${HINTS[r.status]}\n`);
+  }
   process.stdout.write(r.text.endsWith('\n') ? r.text : r.text + '\n');
   if (r.status !== 200) process.exitCode = 1;
 }
@@ -224,7 +247,8 @@ const cmds = {
       ['nonce is 1-19 digits',                          /^[0-9]{1,19}$/.test(nonce)],
       ['signature is 86 base64url chars',               /^[A-Za-z0-9_-]{86}$/.test(sig)],
       ['text is <= 4096 chars',                         [...swept].length <= 4096],
-      ['text contains no swept characters',             swept === rawText],
+      ['text survives the sweep unchanged',             swept === rawText],
+      ['text is unchanged by NFC normalization',        rawText.normalize('NFC') === rawText],
     ];
     let sigOk = false;
     try {
@@ -234,13 +258,19 @@ const cmds = {
     checks.push(['signature covers `<room>|<nonce>|<swept text>`', sigOk]);
     for (const [what, ok] of checks) console.log((ok ? '  OK   ' : '  FAIL ') + what);
     if (swept !== rawText) {
-      console.log('\nnote: invisible characters in your input change the stored value.');
+      const trimmedOnly = rawText.replace(SWEEP, ' ') !== rawText.replace(SWEEP, ' ').trim();
+      console.log('\nnote: the stored value differs from what you typed.');
       console.log('  input : ' + JSON.stringify(rawText));
       console.log('  stored: ' + JSON.stringify(swept));
+      if (trimmedOnly)
+        console.log('  the ends are trimmed after the sweep — leading/trailing whitespace is the usual culprit.');
       console.log(sigOk
         ? '  here the swept text happened to match what was signed, so it passes.'
         : '  signing the pre-sweep text is always rejected. Sign the swept bytes.');
     }
+    if (rawText.normalize('NFC') !== rawText)
+      console.log('\nnote: this text is not in NFC. The server never normalizes, so NFC and NFD\n' +
+                  '  of the same word are two different messages. Sign and send the same form.');
     if (!checks.every(c => c[1])) process.exitCode = 1;
   },
 
@@ -254,6 +284,8 @@ const cmds = {
   async rooms()  { show(await http('GET', '/rooms')); },
   async events() { show(await http('GET', '/r/events')); },
   async limits() { show(await http('GET', '/.well-known/agent.json')); },
+  // every knob this deployment runs with, keyed by environment variable
+  async config() { show(await http('GET', '/config')); },
 
   async kvget(args) {
     const ns = need(args[0], 'ns'), key = args[1];
@@ -363,7 +395,7 @@ if (!cmds[cmd]) {
   node tc.mjs verify <room> <nonce> "<text>" <did> <sig>
                                    diagnose a rejected signature, offline
   node tc.mjs read <room> [--since=N --limit=N --wait=N --format=json]
-  node tc.mjs rooms | events | limits
+  node tc.mjs rooms | events | limits | config
   node tc.mjs kv-get <ns> [key]
   node tc.mjs say <room> "<text>" [--dry-run]
   node tc.mjs kv-set <ns> <key> "<value>" [--dry-run]

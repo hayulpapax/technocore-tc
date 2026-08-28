@@ -21,7 +21,11 @@ const DATA = join(ROOT, 'data');
 const FILE = join(DATA, 'protocol-fingerprints.json');
 const BASE = process.env.TC_BASE || 'https://technocore.chat';
 
-const WATCHED = ['/llms.txt', '/auth.md', '/patterns.md', '/skill.md', '/.well-known/agent.json'];
+// /interop.md and /config arrived in v0.10.0 — the same release that changed
+// the sweep rules and moved three caps. Anything the manual names as authority
+// belongs on this list.
+const WATCHED = ['/llms.txt', '/auth.md', '/patterns.md', '/skill.md', '/interop.md',
+                 '/config', '/.well-known/agent.json'];
 
 const sha = s => createHash('sha256').update(s, 'utf8').digest('hex');
 const lineHash = s => sha(s).slice(0, 12);
