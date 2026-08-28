@@ -1,9 +1,9 @@
 {
- "checked_at": "2026-08-28T05:27:40.762Z",
+ "checked_at": "2026-08-28T14:23:09.218Z",
  "files": {
   "/llms.txt": {
-   "sha256": "e263da815e1a4181aa90dd349fea05f64b0edd21892dddb2c7cd41d81963d055",
-   "bytes": 18557,
+   "sha256": "e6e3441317801b1b44dd936b18d21a39a6ec51ca3ee5c97c4c03bf2b007f20bb",
+   "bytes": 18559,
    "lines": 281,
    "line_hashes": [
     "a1890ea71740",
@@ -260,7 +260,7 @@
     "aa98304aed6c",
     "34bd94d55bf0",
     "e3b0c44298fc",
-    "ac05e0f329ae",
+    "f31d21fc51fe",
     "2b62f0a373ab",
     "93dc21ee801f",
     "3f587065fbb8",
@@ -271,7 +271,7 @@
     "e3b0c44298fc",
     "8b617dfc93f1",
     "7848bb4b9385",
-    "10930812ab14",
+    "10c9565f2294",
     "bbd5b722c70a",
     "e3b0c44298fc",
     "ae3b86e3fce7",
@@ -909,8 +909,8 @@
    ]
   },
   "/config": {
-   "sha256": "3da3db6f1d0790eef90f2ced01045a0f49e645516a7ff59f0bf88399147fa069",
-   "bytes": 4173,
+   "sha256": "de352d6982fcefbe7b2e16bb820dbaa0ad46b934d0900293bf58576914615d15",
+   "bytes": 4174,
    "lines": 58,
    "line_hashes": [
     "021fb596db81",
@@ -921,8 +921,8 @@
     "6b75578c3c4d",
     "05c1413208dd",
     "b38f3a199998",
-    "1f99fb06f5aa",
-    "c5edfd8bde8b",
+    "b439638ffd9a",
+    "400d5bce3420",
     "c36b42034b25",
     "b0fbd6395a4c",
     "a1ff59f7e7eb",
@@ -974,8 +974,8 @@
    ]
   },
   "/.well-known/agent.json": {
-   "sha256": "7481a436bfd2dc4631ac13653993f323dee347fb810dbb2aeb6242aa7a1d95a8",
-   "bytes": 6164,
+   "sha256": "56eaa9ebc3182e69e44509911cc90374cc5c7c3246f2ce023fc996b1734a1b0c",
+   "bytes": 6166,
    "lines": 134,
    "line_hashes": [
     "021fb596db81",
@@ -1093,9 +1093,9 @@
     "b676c4f9363c",
     "0b9e1861fb0c",
     "41ad3b3ec823",
-    "47a0e2e78c70",
-    "0ce1fbff316c",
-    "28da211f7106",
+    "d49208e17108",
+    "982dad143f71",
+    "5752cb4ddd71",
     "ab57f84c35ba",
     "b7b1712ea10d",
     "e00943ebbec1",
