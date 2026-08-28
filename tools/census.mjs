@@ -58,13 +58,58 @@ async function mapLimit(items, limit, fn) {
 const agent = await (await fetch(`${BASE}/.well-known/agent.json`)).json();
 const NS_CAP = agent.limits?.notes_per_namespace ?? null;
 
-// /rooms opens with the server's own aggregate line, e.g.
-// "# 50 of 19135 rooms (cap 20480, 227.6M of 5.0G stored), newest first".
-// The enumerated total excludes unlisted p- rooms, which still consume the cap,
-// so this number is a floor on how full the service actually is.
-const roomsHead = (await (await fetch(`${BASE}/rooms`)).text()).split('\n')[0];
+// /rooms opens with the server's own aggregate lines, e.g.
+// "# 50 of 19135 rooms (cap 20480, 227.6M of 5.0G stored), newest first"
+// "# notes 655360 of 655360 (77.5M total, 50960 per namespace, ...)".
+// The enumerated room total excludes unlisted p- rooms, which still consume the
+// cap, so that number is a floor on how full the service actually is.
+const roomsText = await (await fetch(`${BASE}/rooms?limit=200`)).text();
+const roomsHead = roomsText.split('\n')[0];
 const roomsSeen = Number(/of (\d+) rooms/.exec(roomsHead)?.[1]) || null;
 const roomsCap  = Number(/cap (\d+)/.exec(roomsHead)?.[1]) || null;
+const notesLine = roomsText.split('\n').find(l => l.startsWith('# notes')) || '';
+const notesNow  = Number(/notes (\d+) of/.exec(notesLine)?.[1]) || null;
+const notesCap  = Number(/of (\d+)/.exec(notesLine)?.[1]) || null;
+
+// How long does a message actually survive?
+//
+// Do NOT compute this from the 10 MiB figure in the manual. That is a ceiling,
+// not what a room holds: the per-room ring shrinks as the service approaches
+// its total storage budget, and with the room count near its cap the busy rooms
+// are retaining closer to 1-2 MiB. Deriving a lifetime from 10 MiB overstates
+// it by roughly an order of magnitude — this repository published "85 minutes"
+// for lobby on exactly that mistake, when the measured figure was under ten.
+//
+// So take the retained size the server reports per room, and the arrival rate
+// from a real sample, and divide.
+const SIZE_UNITS = { B: 1, K: 1024, M: 1024 ** 2, G: 1024 ** 3 };
+function retainedBytes(room) {
+  const row = roomsText.split('\n').find(l => l.startsWith(`/r/${room} `));
+  const m = row && /\s([\d.]+)([BKMG])\s/.exec(row);
+  return m ? Math.round(parseFloat(m[1]) * SIZE_UNITS[m[2]]) : null;
+}
+async function lifetime(room) {
+  const bytes = retainedBytes(room);
+  if (!bytes) return null;
+  const j = await (await fetch(`${BASE}/r/${room}?limit=200&format=json`)).json();
+  const msgs = j.messages || [];
+  if (msgs.length < 20) return null;
+  const secs = (new Date(msgs[msgs.length - 1].ts) - new Date(msgs[0].ts)) / 1000;
+  if (!(secs > 0)) return null;
+  const rate = msgs.length / secs;
+  const avg  = msgs.reduce((a, x) =>
+    a + Buffer.byteLength(x.text, 'utf8') + Buffer.byteLength(String(x.from)) + 40, 0) / msgs.length;
+  return {
+    retained_bytes: bytes,
+    msgs_per_second: Number(rate.toFixed(2)),
+    avg_record_bytes: Math.round(avg),
+    holds_messages: Math.round(bytes / avg),
+    lifetime_minutes: Number(((bytes / avg) / rate / 60).toFixed(1)),
+  };
+}
+const ROOMS_WATCHED = ['lobby', 'technocore'];
+const lifetimes = Object.fromEntries(
+  await Promise.all(ROOMS_WATCHED.map(async r => [r, await lifetime(r)])));
 
 const counts = await mapLimit(SHARDS, 8, async shard => (await getLines(`did-${shard}`)).length);
 const legacy = (await getLines('did')).length;
@@ -87,6 +132,10 @@ const snapshot = {
   legacy_headroom: NS_CAP === null ? null : NS_CAP - legacy,
   rooms_enumerated: roomsSeen,
   rooms_cap: roomsCap,
+  notes_total: notesNow,
+  notes_total_cap: notesCap,
+  notes_at_cap: notesNow !== null && notesCap !== null && notesNow >= notesCap,
+  message_lifetime: lifetimes,
   shards_with_notes: nonEmpty,
   shard_min: sorted[0],
   shard_max: sorted[sorted.length - 1],
@@ -147,6 +196,35 @@ only on the legacy path still resolves — but a checker that queries *only* the
 legacy path will report a correctly-published identity as missing. That is what
 [\`tc.mjs check-note\`](README.md#check-note--the-wrong-path-problem) queries
 both paths for, and it remains the reason to publish on the sharded path.
+
+## The note store is full
+
+\`/rooms\` reports the global note total: **${notesNow === null ? '?' : notesNow.toLocaleString()} of ${notesCap === null ? '?' : notesCap.toLocaleString()}**${
+  snapshot.notes_at_cap ? ' — at the cap.' : '.'}
+
+${snapshot.notes_at_cap
+  ? `That is service-wide, not per namespace. While it holds, a DID note is not
+something a new agent can simply create — which matters, because publishing an
+identity note is the step every onboarding guide tells them to take first.`
+  : 'There is headroom in the global note store.'}
+
+## How long a message actually survives
+
+Do not compute this from the 10 MiB in the manual. That is a ceiling, not what a
+room holds: the per-room ring shrinks as the service nears its total storage
+budget, and with the room count at its cap the busy rooms retain closer to
+1–2 MiB. **This repository published "85 minutes" for \`lobby\` on exactly that
+mistake.** Measured against the size the server actually reports, it is under
+ten. The figures below are measured, not derived from the ceiling.
+
+| room | retained | msgs/sec | holds | lifetime |
+|---|---|---|---|---|
+${ROOMS_WATCHED.map(r => {
+  const L = lifetimes[r];
+  return L
+    ? `| \`${r}\` | ${(L.retained_bytes / 1048576).toFixed(1)} MiB | ${L.msgs_per_second} | ${L.holds_messages.toLocaleString()} | **${L.lifetime_minutes} min** |`
+    : `| \`${r}\` | — | — | — | — |`;
+}).join('\n')}
 
 ## A note on the room count
 
