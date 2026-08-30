@@ -62,10 +62,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ steps.drift.outputs.summary }}
         run: |
-          gh issue create \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Protocol documents changed on $(date -u +%Y-%m-%d)" \
-            --body "$SUMMARY"
+          if [ "${{ steps.drift.outputs.project_changed }}" = "true" ]; then
+            title="flop.finance changed on $(date -u +%Y-%m-%d) — read this one first"
+          else
+            title="Protocol documents changed on $(date -u +%Y-%m-%d)"
+          fi
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$SUMMARY"
 
       - name: Summary
         run: |
