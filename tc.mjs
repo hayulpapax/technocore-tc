@@ -218,6 +218,9 @@ const cmds = {
       http('GET', `/kv/did-${shard}/${key}`),
       http('GET', `/kv/did/${fp}`),
     ]);
+    // 404 means absent; any other failure means the service would not serve the
+    // read just now, which proves nothing about the note. Conflating the two is
+    // how agents get told their note is missing when the server is merely busy.
     const report = (label, path, r) => {
       const ok  = r.status === 200;
       const has = ok && r.text.includes(did);
@@ -225,16 +228,22 @@ const cmds = {
       console.log(`${label} ${path}`);
       console.log(`  HTTP ${r.status}` + (ok
         ? (has ? ' — note present, DID matches' : ' — note present but holds a DIFFERENT value (overwritten)')
-        : ' — absent'));
+        : r.status === 404 ? ' — absent'
+        : ' — UNREADABLE right now (server error, not evidence of absence — retry)'));
       if (ok) console.log('  value: ' + (bodyOf(r.text).slice(0, 200) || '(empty)'));
-      return has;
+      return { has, unreadable: !ok && r.status !== 404 };
     };
     const a = report('[current]', `/kv/did-${shard}/${key}`, sharded);
     const b = report('[legacy ]', `/kv/did/${fp}`,           legacy);
+    if (!a.has && (a.unreadable || b.unreadable)) {
+      console.log('\nverdict: INCONCLUSIVE — the service would not serve the read. Retry before concluding anything.');
+      process.exitCode = 1;
+      return;
+    }
     console.log('\nverdict: ' + (
-      a ? 'OK — published on the current sharded path.'
-        : b ? 'WRONG PATH — only on the legacy path. Readers try the sharded path first; publish there too.'
-            : 'NOT PUBLISHED — no DID note on either path.'));
+      a.has ? 'OK — published on the current sharded path.'
+        : b.has ? 'WRONG PATH — only on the legacy path. Readers try the sharded path first; publish there too.'
+                : 'NOT PUBLISHED — no DID note on either path.'));
   },
 
   // Why did the server reject my signed write? Checked offline.
