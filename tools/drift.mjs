@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getText } from './http.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -31,9 +32,7 @@ const sha = s => createHash('sha256').update(s, 'utf8').digest('hex');
 const lineHash = s => sha(s).slice(0, 12);
 
 async function fingerprint(path) {
-  const res = await fetch(BASE + path);
-  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-  const text = await res.text();
+  const text = await getText(BASE + path, { label: path });
   const lines = text.split('\n');
   return { sha256: sha(text), bytes: Buffer.byteLength(text, 'utf8'), lines: lines.length,
            line_hashes: lines.map(lineHash) };

@@ -13,6 +13,7 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { get, getText, getJson } from './http.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -22,17 +23,9 @@ const BASE = process.env.TC_BASE || 'https://technocore.chat';
 const HEX = '0123456789abcdef';
 const SHARDS = [...HEX].flatMap(a => [...HEX].map(b => a + b));
 
-async function getLines(ns, attempt = 0) {
-  const res = await fetch(`${BASE}/kv/${ns}`);
-  if (res.status === 429 && attempt < 5) {
-    const body = await res.text();
-    const wait = Number(res.headers.get('retry-after')) || 5;
-    process.stderr.write(`429 on ${ns}, waiting ${wait}s  ${body.slice(0, 120)}\n`);
-    await new Promise(r => setTimeout(r, wait * 1000));
-    return getLines(ns, attempt + 1);
-  }
+async function getLines(ns) {
+  const res = await get(`${BASE}/kv/${ns}`, { label: ns });
   if (res.status === 404) return [];
-  if (!res.ok) throw new Error(`${ns}: HTTP ${res.status}`);
   const text = await res.text();
   // listings are one path per line; '#' and '!!' lines are the server's banner
   return text.split('\n').filter(l => l.startsWith('/kv/'));
@@ -55,7 +48,7 @@ async function mapLimit(items, limit, fn) {
 // deployment raised notes_per_namespace from 40960 to 50960 and max_rooms from
 // 10240 to 20480 in v0.10.0, which silently invalidated a hard-coded "at cap"
 // claim here until the drift watcher caught the change.
-const agent = await (await fetch(`${BASE}/.well-known/agent.json`)).json();
+const agent = await getJson(`${BASE}/.well-known/agent.json`, { label: 'agent.json' });
 const NS_CAP = agent.limits?.notes_per_namespace ?? null;
 
 // /rooms opens with the server's own aggregate lines, e.g.
@@ -63,7 +56,7 @@ const NS_CAP = agent.limits?.notes_per_namespace ?? null;
 // "# notes 655360 of 655360 (77.5M total, 50960 per namespace, ...)".
 // The enumerated room total excludes unlisted p- rooms, which still consume the
 // cap, so that number is a floor on how full the service actually is.
-const roomsText = await (await fetch(`${BASE}/rooms?limit=200`)).text();
+const roomsText = await getText(`${BASE}/rooms?limit=200`, { label: '/rooms' });
 const roomsHead = roomsText.split('\n')[0];
 const roomsSeen = Number(/of (\d+) rooms/.exec(roomsHead)?.[1]) || null;
 const roomsCap  = Number(/cap (\d+)/.exec(roomsHead)?.[1]) || null;
@@ -91,7 +84,7 @@ function retainedBytes(room) {
 async function lifetime(room) {
   const bytes = retainedBytes(room);
   if (!bytes) return null;
-  const j = await (await fetch(`${BASE}/r/${room}?limit=200&format=json`)).json();
+  const j = await getJson(`${BASE}/r/${room}?limit=200&format=json`, { label: room });
   const msgs = j.messages || [];
   if (msgs.length < 20) return null;
   const secs = (new Date(msgs[msgs.length - 1].ts) - new Date(msgs[0].ts)) / 1000;
