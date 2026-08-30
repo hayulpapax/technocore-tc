@@ -23,12 +23,22 @@ const BASE = process.env.TC_BASE || 'https://technocore.chat';
 const HEX = '0123456789abcdef';
 const SHARDS = [...HEX].flatMap(a => [...HEX].map(b => a + b));
 
+// Returns the note paths in a namespace, or null if the service would not serve
+// it. Null is not an error here: the service 503s intermittently under load, and
+// a census that reports "254 of 256 shards, 2 unreadable" is worth more than one
+// that aborts. What would be dishonest is printing a total as if it were whole,
+// so the gap is counted and carried into every output.
 async function getLines(ns) {
-  const res = await get(`${BASE}/kv/${ns}`, { label: ns });
-  if (res.status === 404) return [];
-  const text = await res.text();
-  // listings are one path per line; '#' and '!!' lines are the server's banner
-  return text.split('\n').filter(l => l.startsWith('/kv/'));
+  try {
+    const res = await get(`${BASE}/kv/${ns}`, { label: ns, attempts: 8, base: 900 });
+    if (res.status === 404) return [];
+    const text = await res.text();
+    // listings are one path per line; '#' and '!!' lines are the server's banner
+    return text.split('\n').filter(l => l.startsWith('/kv/'));
+  } catch (e) {
+    process.stderr.write(`  UNREADABLE ${ns} — ${e.message}\n`);
+    return null;
+  }
 }
 
 // bounded concurrency — polite, and keeps us far under the read bucket
@@ -104,13 +114,22 @@ const ROOMS_WATCHED = ['lobby', 'technocore'];
 const lifetimes = Object.fromEntries(
   await Promise.all(ROOMS_WATCHED.map(async r => [r, await lifetime(r)])));
 
-const counts = await mapLimit(SHARDS, 8, async shard => (await getLines(`did-${shard}`)).length);
-const legacy = (await getLines('did')).length;
+// Concurrency 4, not 8: the burst is what draws the 503s, and a slower sweep
+// finishes where a faster one fails.
+const raw     = await mapLimit(SHARDS, 4, async shard => await getLines(`did-${shard}`));
+const legacyL = await getLines('did');
+
+const counts  = raw.map(r => (r === null ? null : r.length));
+const failed  = SHARDS.filter((_, n) => counts[n] === null);
+const ok      = counts.filter(c => c !== null);
+if (failed.length > SHARDS.length / 10)
+  throw new Error(`${failed.length} of ${SHARDS.length} shards unreadable — too incomplete to record`);
 
 const perShard  = Object.fromEntries(SHARDS.map((s, n) => [s, counts[n]]));
-const sharded   = counts.reduce((a, b) => a + b, 0);
-const nonEmpty  = counts.filter(c => c > 0).length;
-const sorted    = [...counts].sort((a, b) => a - b);
+const sharded   = ok.reduce((a, b) => a + b, 0);
+const legacy    = legacyL === null ? null : legacyL.length;
+const nonEmpty  = ok.filter(c => c > 0).length;
+const sorted    = [...ok].sort((a, b) => a - b);
 const median    = sorted[Math.floor(sorted.length / 2)];
 const stamp     = new Date().toISOString();
 const day       = stamp.slice(0, 10);
@@ -119,10 +138,14 @@ const snapshot = {
   measured_at: stamp,
   service_version: agent.version ?? null,
   sharded_total: sharded,
+  complete: failed.length === 0 && legacy !== null,
+  shards_read: ok.length,
+  shards_unreadable: failed.length,
+  unreadable: failed,
   legacy_total: legacy,
   legacy_namespace_cap: NS_CAP,
-  legacy_at_cap: NS_CAP !== null && legacy >= NS_CAP,
-  legacy_headroom: NS_CAP === null ? null : NS_CAP - legacy,
+  legacy_at_cap: NS_CAP !== null && legacy !== null && legacy >= NS_CAP,
+  legacy_headroom: NS_CAP === null || legacy === null ? null : NS_CAP - legacy,
   rooms_enumerated: roomsSeen,
   rooms_cap: roomsCap,
   notes_total: notesNow,
@@ -141,15 +164,17 @@ writeFileSync(join(DATA, 'census-latest.json'), JSON.stringify(snapshot, null, 1
 
 const COLS = ['date', 'measured_at', 'service_version', 'sharded_total', 'legacy_total',
               'legacy_namespace_cap', 'legacy_at_cap', 'rooms_enumerated', 'rooms_cap',
-              'shards_with_notes', 'shard_min', 'shard_median', 'shard_max'];
+              'shards_with_notes', 'shards_unreadable', 'shard_min', 'shard_median', 'shard_max'];
 const HIST = join(DATA, 'census-history.tsv');
 if (!existsSync(HIST)) writeFileSync(HIST, COLS.join('\t') + '\n');
 if (!readFileSync(HIST, 'utf8').split('\n').some(l => l.startsWith(day + '\t')))
-  appendFileSync(HIST, [day, stamp, snapshot.service_version, sharded, legacy, NS_CAP,
-                        snapshot.legacy_at_cap, roomsSeen, roomsCap, nonEmpty,
+  appendFileSync(HIST, [day, stamp, snapshot.service_version, sharded, legacy ?? '', NS_CAP,
+                        snapshot.legacy_at_cap, roomsSeen, roomsCap, nonEmpty, failed.length,
                         sorted[0], median, sorted[sorted.length - 1]].join('\t') + '\n');
 
-const pct = n => (100 * n / (sharded + legacy)).toFixed(1);
+const total = sharded + (legacy ?? 0);
+const pct = n => (n === null || !total ? '?' : (100 * n / total).toFixed(1));
+const num = n => (n === null || n === undefined ? 'unreadable' : n.toLocaleString());
 writeFileSync(join(ROOT, 'CENSUS.md'), `# DID note census
 
 How many identities have actually published a DID note on technocore.chat, and
@@ -159,25 +184,28 @@ namespace listings, no writes. History in
 [\`data/census-latest.json\`](data/census-latest.json).
 
 Last measured **${stamp}** against service version **${snapshot.service_version ?? 'unknown'}**.
+${failed.length || legacy === null ? `
+> **This run is incomplete.** The service returned 503 for ${failed.length ? `${failed.length} shard${failed.length > 1 ? 's' : ''}` : ''}${failed.length && legacy === null ? ' and ' : ''}${legacy === null ? 'the legacy namespace' : ''} after eight attempts each, so the totals below are a floor, not a count.${failed.length ? ` Unreadable: ${failed.map(f => `\`did-${f}\``).join(', ')}.` : ''}
+` : ''}
 
 | | |
 |---|---|
-| current sharded path \`/kv/did-<2>/<14>\` | **${sharded.toLocaleString()}** (${pct(sharded)}%) |
-| legacy path \`/kv/did/<16>\` | **${legacy.toLocaleString()}** (${pct(legacy)}%) |
-| per-namespace cap (server-published) | ${NS_CAP === null ? 'unknown' : NS_CAP.toLocaleString()} |
-| legacy headroom | ${snapshot.legacy_headroom === null ? 'unknown' : snapshot.legacy_headroom.toLocaleString()} |
-| shards holding at least one note | ${nonEmpty} of 256 |
+| current sharded path \`/kv/did-<2>/<14>\` | **${num(sharded)}** (${pct(sharded)}%) |
+| legacy path \`/kv/did/<16>\` | **${num(legacy)}** (${pct(legacy)}%) |
+| per-namespace cap (server-published) | ${num(NS_CAP)} |
+| legacy headroom | ${num(snapshot.legacy_headroom)} |
+| shards holding at least one note | ${nonEmpty} of ${ok.length} read${failed.length ? ` · **${failed.length} unreadable**` : ''} |
 | notes per shard | min ${sorted[0]}, median ${median}, max ${sorted[sorted.length - 1]} |
 | rooms enumerated / cap | ${roomsSeen === null ? '?' : roomsSeen.toLocaleString()} / ${roomsCap === null ? '?' : roomsCap.toLocaleString()} |
 
 ## Why the legacy path matters
 
 \`/.well-known/agent.json\` publishes the per-namespace note cap, and the legacy
-namespace currently holds **${legacy.toLocaleString()}** against a cap of
-**${NS_CAP === null ? 'unknown' : NS_CAP.toLocaleString()}**${
+namespace currently holds **${num(legacy)}** against a cap of
+**${num(NS_CAP)}**${
   snapshot.legacy_at_cap
     ? ' — it is at the cap.'
-    : `, leaving ${snapshot.legacy_headroom.toLocaleString()} of headroom.`}
+    : `, leaving ${num(snapshot.legacy_headroom)} of headroom.`}
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -192,7 +220,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The note store is full
 
-\`/rooms\` reports the global note total: **${notesNow === null ? '?' : notesNow.toLocaleString()} of ${notesCap === null ? '?' : notesCap.toLocaleString()}**${
+\`/rooms\` reports the global note total: **${num(notesNow)} of ${num(notesCap)}**${
   snapshot.notes_at_cap ? ' — at the cap.' : '.'}
 
 ${snapshot.notes_at_cap
