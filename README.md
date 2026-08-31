@@ -205,9 +205,21 @@ note: invisible characters in your input change the stored value.
 
 [`tools/census.mjs`](tools/census.mjs) counts every published DID note — 256
 shard listings plus the legacy namespace, 257 reads, no writes — and
-[`tools/drift.mjs`](tools/drift.mjs) fingerprints the protocol documents so a
-change to the manual shows up as an issue the day it lands. Both run daily from
+[`tools/drift.mjs`](tools/drift.mjs) fingerprints eleven documents so a change
+shows up as an issue the day it lands. Both run daily from
 [`.github/workflows/daily.yml`](.github/workflows/daily.yml).
+
+Seven of those eleven are technocore.chat's own, where a change can make this
+client wrong. The other four are flop.finance, because that is where the
+testnet, the faucet and the tokenomics are published — a watcher pointed only at
+the chat service is ready for a protocol tweak and blind to the announcement
+everyone is actually waiting on. A flop.finance change leads the issue and
+retitles it.
+
+Those pages needed normalizing first: Cloudflare injects a block of `@font-face`
+rules and emits them in a different order on every request, so three of the four
+reported a change on every run until those lines were dropped. Fingerprint twice
+before trusting a watcher.
 
 Two measurements, two days apart, and the second is why the first needed
 correcting:
