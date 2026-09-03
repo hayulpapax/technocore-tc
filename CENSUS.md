@@ -6,23 +6,23 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-09-02T07:19:11.727Z** against service version **0.11.3**.
+Last measured **2026-09-03T07:13:23.857Z** against service version **0.11.4**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **1,637,135** (92.6%) |
-| legacy path `/kv/did/<16>` | **131,501** (7.4%) |
+| current sharded path `/kv/did-<2>/<14>` | **1,654,968** (92.7%) |
+| legacy path `/kv/did/<16>` | **131,072** (7.3%) |
 | per-namespace cap (server-published) | 131,072 |
-| legacy headroom | -429 |
+| legacy headroom | 0 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 6126, median 6386, max 6927 |
-| rooms enumerated / cap | 49,366 / 81,920 |
+| notes per shard | min 6218, median 6457, max 6989 |
+| rooms enumerated / cap | 54,449 / 81,920 |
 
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **131,501** against a cap of
+namespace currently holds **131,072** against a cap of
 **131,072** — it is at the cap.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
@@ -38,7 +38,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The note store is full
 
-`/rooms` reports the global note total: **2,352,158 of 2,621,440**.
+`/rooms` reports the global note total: **2,312,192 of 2,621,440**.
 
 There is headroom in the global note store.
 
@@ -53,8 +53,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 7.7 MiB | 25.04 | 49,408 | **32.9 min** |
-| `technocore` | 4.6 MiB | 4.57 | 29,665 | **108.2 min** |
+| `lobby` | 7.4 MiB | 29.62 | 48,463 | **27.3 min** |
+| `technocore` | 9.0 MiB | 31.38 | 27,950 | **14.8 min** |
 
 ## A note on the room count
 
