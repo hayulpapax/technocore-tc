@@ -41,6 +41,15 @@ jobs:
         id: drift
         run: node tools/drift.mjs
 
+      # Replies to comments this repository left on flop-labs/tclk. Tracked here
+      # rather than by notification because a reply is easy to miss in a repo
+      # moving this fast, and because the state file makes it announce once.
+      - name: Check for replies on tclk
+        id: tclk
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/watch-tclk.mjs
+
       - name: Commit what changed
         run: |
           set -euo pipefail
@@ -69,6 +78,16 @@ jobs:
           fi
           gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$SUMMARY"
 
+      - name: Open an issue when someone replies on tclk
+        if: steps.tclk.outputs.replied == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.tclk.outputs.summary }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "tclk 답글 도착 — $(date -u +%Y-%m-%d)" \
+            --body "$SUMMARY"
+
       - name: Summary
         run: |
           {
@@ -82,4 +101,6 @@ jobs:
               console.log('| shards with notes | '+s.shards_with_notes+' of 256 |');"
             echo ""
             echo "protocol drift: ${{ steps.drift.outputs.changed }}"
+            echo ""
+            echo "tclk replies: ${{ steps.tclk.outputs.replied }}"
           } >> "$GITHUB_STEP_SUMMARY"

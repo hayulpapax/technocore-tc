@@ -16,12 +16,12 @@ const RETRY_STATUS = new Set([
 ]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-export async function get(url, { attempts = 6, base = 700, label = url } = {}) {
+export async function get(url, { attempts = 6, base = 700, label = url, headers } = {}) {
   let last = null;
   for (let i = 0; i < attempts; i++) {
     if (i) await sleep(Math.min(base * 2 ** (i - 1), 15000));
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, headers ? { headers } : undefined);
       if (res.ok || res.status === 404) return res;
       last = new Error(`${label}: HTTP ${res.status}`);
       if (!RETRY_STATUS.has(res.status)) throw last;
