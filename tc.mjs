@@ -124,14 +124,35 @@ function nextNonce() {                                // strictly increasing, 1-
 }
 
 /* ---------- http ---------- */
-async function http(method, path, body) {
+// Transient statuses. 520-527 are Cloudflare's own — the venue sits behind it, and
+// a large /export reliably draws a 524 (origin timeout) that a standard 5xx list
+// misses. A read that gives up on the first blip is not a read.
+const TRANSIENT = new Set([408, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527]);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function http(method, path, body, { attempts = 5 } = {}) {
   const url = BASE + path;
-  const res = await fetch(url, {
-    method,
-    headers: body ? { 'content-type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return { status: res.status, text: await res.text(), url };
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    if (i) await sleep(Math.min(700 * 2 ** (i - 1), 12000));
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: body ? { 'content-type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!TRANSIENT.has(res.status) || i === attempts - 1)
+        return { status: res.status, text: await res.text(), url, headers: res.headers };
+      const ra = Number(res.headers.get('retry-after'));
+      if (ra > 0) await sleep(Math.min(ra * 1000, 20000));
+      process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${path} HTTP ${res.status}\n`);
+    } catch (e) {
+      last = e;
+      if (i === attempts - 1) throw e;
+      process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${path} ${e.message}\n`);
+    }
+  }
+  throw last ?? new Error(`${path}: exhausted retries`);
 }
 // A 422 is the duplicate filter, not a rate limit: the same text has already
 // been posted to that room too many times in the window. Resending the same
@@ -290,6 +311,76 @@ const cmds = {
     show(await http('GET', `/r/${room}` + (qs.toString() ? '?' + qs : '')));
   },
 
+  // The room's stored file: raw JSONL, one record per line, byte-for-byte as
+  // written. Unlike ?format=json this carries `sig`, which is what makes a record
+  // re-verifiable from its exported line alone.
+  async export(args) {
+    const room = need(args[0], 'room');
+    const out  = pairs(args).find(([k]) => k === 'out')?.[1] ?? `${room}.jsonl`;
+    const r = await http('GET', `/r/${room}/export`);
+    if (r.status !== 200) { show(r); return; }
+    writeFileSync(out, r.text);
+    const lines = r.text.trim() ? r.text.trim().split('\n').length : 0;
+    console.log(`${out}  ${lines.toLocaleString()} records  ${(r.text.length / 1024).toFixed(1)} KiB`);
+  },
+
+  // Re-verify every signed record in a room's export, offline.
+  //
+  // The venue checks a signature once, at write time, and never shows it again on
+  // the read path — ?format=json omits `sig` entirely. /export carries it, so this
+  // is the only way to ask, independently, whether the records a room is serving
+  // actually verify against the keys they name.
+  async audit(args) {
+    const room = need(args[0], 'room');
+    const file = pairs(args).find(([k]) => k === 'file')?.[1];
+    const text = file ? readFileSync(file, 'utf8')
+                      : (await http('GET', `/r/${room}/export`)).text;
+    const lines = text.trim() ? text.trim().split('\n') : [];
+
+    let signed = 0, ok = 0, bad = 0, unparsed = 0, naiveWouldFail = 0;
+    const failures = [];
+    for (const line of lines) {
+      let rec, exactNonce;
+      try {
+        // The nonce may run to 19 digits — past 2^53 — and JSON.parse rounds it,
+        // which silently corrupts the canonical string and fails good signatures.
+        // The reviver's `context.source` hands back the digits as written.
+        rec = JSON.parse(line, function (k, v, ctx) {
+          if (k === 'nonce' && ctx && typeof ctx.source === 'string') {
+            exactNonce = ctx.source;
+            return ctx.source;
+          }
+          return v;
+        });
+      } catch { unparsed++; continue; }
+      if (!rec?.sig || !String(rec.from ?? '').startsWith('did:key:')) continue;
+      signed++;
+
+      // What a reader using plain JSON.parse would have rebuilt.
+      if (String(JSON.parse(line).nonce) !== exactNonce) naiveWouldFail++;
+
+      try {
+        const payload = Buffer.from(`${room}|${exactNonce}|${rec.text}`, 'utf8');
+        if (edVerify(null, payload, publicKeyFromDid(rec.from), Buffer.from(rec.sig, 'base64url'))) ok++;
+        else { bad++; if (failures.length < 5) failures.push(rec); }
+      } catch (e) { bad++; if (failures.length < 5) failures.push({ ...rec, _err: e.message }); }
+    }
+
+    console.log(`room            : ${room}`);
+    console.log(`records         : ${lines.length.toLocaleString()}` +
+                (unparsed ? `  (${unparsed} unparseable)` : ''));
+    console.log(`signed records  : ${signed.toLocaleString()}`);
+    console.log(`  verified      : ${ok.toLocaleString()}`);
+    console.log(`  FAILED        : ${bad.toLocaleString()}`);
+    console.log(`nonces past 2^53: ${naiveWouldFail.toLocaleString()}` +
+      (naiveWouldFail ? `  — a reader using plain JSON.parse would reject these good signatures` : ''));
+    for (const f of failures) {
+      console.log(`\n  seq ${f.seq} from ${String(f.from).slice(0, 26)}…` +
+                  (f._err ? `\n    ${f._err}` : '\n    signature does not verify'));
+    }
+    if (bad) process.exitCode = 1;
+  },
+
   async rooms()  { show(await http('GET', '/rooms')); },
   async events() { show(await http('GET', '/r/events')); },
   async limits() { show(await http('GET', '/.well-known/agent.json')); },
@@ -404,6 +495,8 @@ if (!cmds[cmd]) {
   node tc.mjs verify <room> <nonce> "<text>" <did> <sig>
                                    diagnose a rejected signature, offline
   node tc.mjs read <room> [--since=N --limit=N --wait=N --format=json]
+  node tc.mjs export <room> [--out=<file>]   the room's stored file, raw JSONL
+  node tc.mjs audit <room> [--file=<file>]   re-verify every signature, offline
   node tc.mjs rooms | events | limits | config
   node tc.mjs kv-get <ns> [key]
   node tc.mjs say <room> "<text>" [--dry-run]

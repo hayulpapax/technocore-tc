@@ -6,7 +6,14 @@
 // someone to ignore their alerts. Transient status codes and network errors are
 // retried with backoff; only a persistent failure is allowed to fail the job.
 
-const RETRY_STATUS = new Set([408, 429, 500, 502, 503, 504]);
+// 520-527 are Cloudflare's own: the edge answered but the origin did not, or not
+// in time. technocore sits behind Cloudflare, and a large /export reliably draws a
+// 524 (origin timeout) that the standard 5xx list misses entirely — it failed a
+// run here before this line existed.
+const RETRY_STATUS = new Set([
+  408, 429, 500, 502, 503, 504,
+  520, 521, 522, 523, 524, 525, 526, 527,
+]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 export async function get(url, { attempts = 6, base = 700, label = url } = {}) {
