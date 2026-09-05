@@ -6,24 +6,24 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-09-05T00:23:44.888Z** against service version **0.11.4**.
+Last measured **2026-09-04T08:31:40.712Z** against service version **0.11.4**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **1,930,986** (92.2%) |
-| legacy path `/kv/did/<16>` | **163,853** (7.8%) |
+| current sharded path `/kv/did-<2>/<14>` | **2,013,529** (92.7%) |
+| legacy path `/kv/did/<16>` | **159,655** (7.3%) |
 | per-namespace cap (server-published) | 163,840 |
-| legacy headroom | -13 |
+| legacy headroom | 4,185 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 7315, median 7537, max 8139 |
+| notes per shard | min 7631, median 7861, max 8420 |
 | rooms enumerated / cap | 69,417 / 163,840 |
 
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **163,853** against a cap of
-**163,840** — it is at the cap.
+namespace currently holds **159,655** against a cap of
+**163,840**, leaving 4,185 of headroom.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -53,8 +53,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 6.0 MiB | 33.43 | 36,303 | **18.1 min** |
-| `technocore` | 8.4 MiB | 3.5 | 48,901 | **232.9 min** |
+| `lobby` | 6.0 MiB | 23.49 | 30,577 | **21.7 min** |
+| `technocore` | 8.4 MiB | 3.48 | 51,991 | **248.8 min** |
 
 ## A note on the room count
 

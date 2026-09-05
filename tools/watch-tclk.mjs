@@ -39,20 +39,28 @@ for (const item of mine.items ?? []) {
   const comments = await gh(`/repos/${REPO}/issues/${n}/comments?per_page=100`);
   const ours = comments.filter(c => c.user?.login === ME);
   if (ours.length === 0) continue;                       // search matched something else
-  const lastOurs = ours[ours.length - 1].created_at;
-  const after = comments.filter(c => c.user?.login !== ME && c.created_at > lastOurs);
+  const others = comments.filter(c => c.user?.login !== ME);
+  const seen = prev.threads?.[n];
 
-  const seen = prev.threads?.[n] ?? {};
+  // The watermark is what we have already announced — never "after our last
+  // comment". Keying off our own latest comment loses every reply that arrived
+  // between two of ours: posting a follow-up would silently retire the unread
+  // replies it was answering. First sight of a thread starts the watermark at our
+  // first comment, so we report the conversation from where we joined it and not
+  // the whole history before that.
+  const watermark = seen?.watermark ?? ours[0].created_at;
+  const fresh = others.filter(c => c.created_at > watermark);
+  const newest = others.length ? others[others.length - 1].created_at : null;
+
   now.threads[n] = {
     title: item.title,
     url: item.html_url,
     state: item.state,
-    our_last_comment: lastOurs,
-    replies_after_us: after.length,
-    last_reply_at: after.length ? after[after.length - 1].created_at : null,
+    our_last_comment: ours[ours.length - 1].created_at,
+    watermark: newest && newest > watermark ? newest : watermark,
+    replies_since_we_joined: others.filter(c => c.created_at > ours[0].created_at).length,
+    last_reply_at: newest,
   };
-
-  const fresh = after.filter(c => !seen.last_reply_at || c.created_at > seen.last_reply_at);
   if (fresh.length) {
     news.push({
       kind: 'reply', number: n, title: item.title, url: item.html_url,
