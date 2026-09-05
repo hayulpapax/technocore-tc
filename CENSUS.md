@@ -6,24 +6,24 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-09-04T08:31:40.712Z** against service version **0.11.4**.
+Last measured **2026-09-05T07:02:15.484Z** against service version **0.12.0**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **2,013,529** (92.7%) |
-| legacy path `/kv/did/<16>` | **159,655** (7.3%) |
+| current sharded path `/kv/did-<2>/<14>` | **1,939,571** (92.2%) |
+| legacy path `/kv/did/<16>` | **163,574** (7.8%) |
 | per-namespace cap (server-published) | 163,840 |
-| legacy headroom | 4,185 |
+| legacy headroom | 266 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 7631, median 7861, max 8420 |
-| rooms enumerated / cap | 69,417 / 163,840 |
+| notes per shard | min 7333, median 7571, max 8159 |
+| rooms enumerated / cap | 54,413 / 81,920 |
 
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **159,655** against a cap of
-**163,840**, leaving 4,185 of headroom.
+namespace currently holds **163,574** against a cap of
+**163,840**, leaving 266 of headroom.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -38,7 +38,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The note store is full
 
-`/rooms` reports the global note total: **2,672,684 of 5,242,880**.
+`/rooms` reports the global note total: **2,280,322 of 2,621,440**.
 
 There is headroom in the global note store.
 
@@ -53,8 +53,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 6.0 MiB | 23.49 | 30,577 | **21.7 min** |
-| `technocore` | 8.4 MiB | 3.48 | 51,991 | **248.8 min** |
+| `lobby` | 7.5 MiB | 44.34 | 51,712 | **19.4 min** |
+| `technocore` | 8.7 MiB | 5.37 | 58,903 | **182.8 min** |
 
 ## A note on the room count
 

@@ -1,14 +1,14 @@
 {
- "checked_at": "2026-09-05T00:25:03.540Z",
+ "checked_at": "2026-09-05T07:02:17.994Z",
  "threads": {
   "93": {
    "title": "`foldTranscript` trusts the export's row order and never checks for a gap — deleting one signed row folds a claimed deal to `refunded`, with no `BAD` verdict",
    "url": "https://github.com/flop-labs/tclk/issues/93",
    "state": "open",
-   "our_last_comment": "2026-09-04T23:38:59Z",
-   "watermark": "2026-09-04T18:55:45Z",
-   "replies_since_we_joined": 3,
-   "last_reply_at": "2026-09-04T18:55:45Z"
+   "our_last_comment": "2026-09-05T00:40:30Z",
+   "watermark": "2026-09-05T00:58:09Z",
+   "replies_since_we_joined": 4,
+   "last_reply_at": "2026-09-05T00:58:09Z"
   }
  }
 }
