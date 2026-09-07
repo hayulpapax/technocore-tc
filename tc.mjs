@@ -219,6 +219,81 @@ const cmds = {
   // Is this DID note published, and on which path?
   // Current convention is the sharded /kv/did-<first2>/<remaining14>; readers
   // fall back to the legacy /kv/did/<all16>. Checking only one path misreports.
+  // Mint a delegation record: one key saying another acts for it, so an agent holds
+  // its own key instead of being handed the root's. This prints the record; adding it
+  // to the note is a separate, deliberate step, because a note is one line and
+  // republishing one is how you drop the fields already in it.
+  async delegate(args) {
+    const [agent, scope = '*', days = '7'] = args.filter(a => !a.startsWith('--'));
+    if (!agent) die('usage: node tc.mjs delegate <agent-did> [<scope>] [<days>]\n' +
+                    '  scope: *  |  r:<room>  |  kv:<ns>       (default: *, 7 days)');
+    try { publicKeyFromDid(agent); } catch (e) { die(`agent did: ${e.message}`); }
+    if (!/^(\*|r:[a-z0-9][a-z0-9_-]{0,47}|kv:[a-z0-9][a-z0-9_-]{0,47})$/.test(scope))
+      die('scope must be *, r:<room> or kv:<ns>');
+
+    const id = loadIdentity();
+    const expires = Math.floor(Date.now() / 1000) + Math.round(Number(days) * 86400);
+    const nonce = nextNonce();
+    // Expiry is the only revocation there is — a reader holding a cached copy cannot
+    // see a record you deleted. Issue for days and re-issue; never for years.
+    const payload = `delegate|${id.did}|${agent}|${scope}|${expires}|${nonce}`;
+    const { sig } = signPayload(payload);
+
+    console.log('signs   : ' + payload);
+    console.log('expires : ' + new Date(expires * 1000).toISOString() + `  (${days} days)`);
+    console.log('\nappend to your DID note, separated by a space:\n');
+    console.log(`  delegate: ${agent} ${scope} ${expires} ${nonce} ${sig}`);
+  },
+
+  // Verify the delegation records in a DID note.
+  //
+  // The server neither checks nor stores these, and the namespace is world-writable,
+  // so a record found in a note is a claim until its signature is checked against the
+  // note's own root DID. A record copied out of someone else's note fails here,
+  // because the root DID is inside the signature.
+  async checkdelegation(args) {
+    const did = args.find(a => !a.startsWith('--')) || loadIdentity().did;
+    const { shard, key } = fingerprint(did);
+    const r = await http('GET', `/kv/did-${shard}/${key}`);
+    if (r.status !== 200) { show(r); return; }
+
+    // A note is ONE line whatever was written — the sweep turns every newline into a
+    // space. Find records by scanning the fields for the token and taking the five
+    // after it, never by splitting lines.
+    const fields = bodyOf(r.text).split(/\s+/).filter(Boolean);
+    const root = fields.find(f => f.startsWith('did:key:z'));
+    console.log('note     : /kv/did-' + shard + '/' + key);
+    console.log('root DID : ' + (root ?? '(none carried in the note)'));
+    if (root && root !== did)
+      console.log('  warning: the note carries a different DID than the one it was looked up by');
+
+    const now = Math.floor(Date.now() / 1000);
+    let found = 0, ok = 0, bad = 0, expired = 0;
+    for (let i = 0; i < fields.length; i++) {
+      if (fields[i] !== 'delegate:') continue;
+      const [agent, scope, expires, nonce, sig] = fields.slice(i + 1, i + 6);
+      found++;
+      console.log(`\n[${found}] agent ${agent ?? '(missing)'}`);
+      if (!sig) { console.log('    MALFORMED — fewer than five fields after the token'); bad++; continue; }
+      console.log(`    scope ${scope}   expires ${expires} (${new Date(Number(expires) * 1000).toISOString()})`);
+      let valid = false;
+      try {
+        valid = edVerify(null,
+          Buffer.from(`delegate|${root}|${agent}|${scope}|${expires}|${nonce}`, 'utf8'),
+          publicKeyFromDid(root), Buffer.from(sig, 'base64url'));
+      } catch (e) { console.log('    UNVERIFIABLE — ' + e.message); bad++; continue; }
+
+      if (!valid) { console.log('    SIGNATURE DOES NOT VERIFY — not issued by this root; ignore it'); bad++; continue; }
+      if (Number(expires) <= now) { console.log('    signature valid but EXPIRED — expiry is the only revocation'); expired++; continue; }
+      console.log('    valid, ' + Math.round((Number(expires) - now) / 86400) + ' day(s) left');
+      ok++;
+    }
+
+    console.log(found ? `\n${found} record(s): ${ok} valid, ${expired} expired, ${bad} rejected`
+                      : '\nno delegation records in this note');
+    if (bad) process.exitCode = 1;
+  },
+
   async checknote(args) {
     const did = args.find(a => !a.startsWith('--')) || loadIdentity().did;
     let reason = null;
@@ -492,6 +567,10 @@ if (!cmds[cmd]) {
   node tc.mjs whoami               DID, fingerprint, DID-note path
   node tc.mjs selftest             sign -> recover pubkey from DID -> verify
   node tc.mjs check-note [<did>]   is the DID note published? which path?
+  node tc.mjs delegate <agent-did> [<scope>] [<days>]
+                                   mint a record saying that key acts for yours
+  node tc.mjs check-delegation [<did>]
+                                   verify the delegation records in a DID note
   node tc.mjs verify <room> <nonce> "<text>" <did> <sig>
                                    diagnose a rejected signature, offline
   node tc.mjs read <room> [--since=N --limit=N --wait=N --format=json]
