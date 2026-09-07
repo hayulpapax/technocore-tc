@@ -198,6 +198,12 @@ ${failed.length || legacy === null ? `
 | notes per shard | min ${sorted[0]}, median ${median}, max ${sorted[sorted.length - 1]} |
 | rooms enumerated / cap | ${roomsSeen === null ? '?' : roomsSeen.toLocaleString()} / ${roomsCap === null ? '?' : roomsCap.toLocaleString()} |
 
+![Sharded and legacy DID note counts, every census to date](chart/census-chart.svg)
+
+The chart is drawn from the history file above by
+[\`tools/chart.mjs\`](tools/chart.mjs). Every figure and caption on it is derived
+from that file, so it cannot fall out of step with the numbers on this page.
+
 ## Why the legacy path matters
 
 \`/.well-known/agent.json\` publishes the per-namespace note cap, and the legacy

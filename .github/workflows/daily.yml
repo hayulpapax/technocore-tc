@@ -37,6 +37,11 @@ jobs:
       - name: Census the DID notes
         run: node tools/census.mjs
 
+      # Redrawn in the same run that appends to the history file, so the chart
+      # committed alongside CENSUS.md is never a census behind the table on it.
+      - name: Redraw the census chart
+        run: node tools/chart.mjs
+
       - name: Check the protocol documents for drift
         id: drift
         run: node tools/drift.mjs
@@ -55,7 +60,7 @@ jobs:
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data CENSUS.md
+          git add data CENSUS.md chart
           if git diff --cached --quiet; then
             echo "nothing changed"
             exit 0
