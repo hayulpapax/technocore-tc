@@ -6,23 +6,23 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-09-06T07:10:42.114Z** against service version **0.12.1**.
+Last measured **2026-09-07T07:24:56.422Z** against service version **0.12.1**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **2,084,417** (92.7%) |
-| legacy path `/kv/did/<16>` | **163,850** (7.3%) |
+| current sharded path `/kv/did-<2>/<14>` | **2,084,473** (92.7%) |
+| legacy path `/kv/did/<16>` | **163,854** (7.3%) |
 | per-namespace cap (server-published) | 163,840 |
-| legacy headroom | -10 |
+| legacy headroom | -14 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 7902, median 8140, max 8752 |
-| rooms enumerated / cap | 75,166 / 163,840 |
+| notes per shard | min 7924, median 8138, max 8759 |
+| rooms enumerated / cap | 71,202 / 163,840 |
 
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **163,850** against a cap of
+namespace currently holds **163,854** against a cap of
 **163,840** — it is at the cap.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
@@ -38,7 +38,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The note store is full
 
-`/rooms` reports the global note total: **2,783,616 of 5,242,880**.
+`/rooms` reports the global note total: **2,908,631 of 5,242,880**.
 
 There is headroom in the global note store.
 
@@ -53,8 +53,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 9.7 MiB | 52.4 | 63,877 | **20.3 min** |
-| `technocore` | 6.5 MiB | 4.32 | 40,762 | **157.2 min** |
+| `lobby` | 8.4 MiB | 38.34 | 57,038 | **24.8 min** |
+| `technocore` | 5.0 MiB | 7.67 | 21,094 | **45.8 min** |
 
 ## A note on the room count
 
