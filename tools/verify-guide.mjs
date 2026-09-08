@@ -142,6 +142,29 @@ const ROOM = 'technocore';
         grammar !== undefined && llms.includes(grammar), grammar ?? '(가이드에서 못 찾음)');
 }
 
+// §7-3: advisory parameters are clamped or defaulted, never refused — and `format` is
+// matched exactly, so `JSON` is not `json`. Read-only probes; the guide's claim is
+// specific enough to be wrong, which is the only kind worth checking.
+{
+  const count = async q => (await getJson(`${BASE}/r/${ROOM}?format=json&${q}`, { label: q })).count;
+  const cases = [
+    ['limit=9999', 200, '상한으로 클램프'],
+    ['limit=0',      1, '하한으로 클램프'],
+    ['limit=-5',    50, '기본값으로 폴백'],
+    ['limit=abc',   50, '기본값으로 폴백'],
+  ];
+  for (const [q, want, why] of cases) {
+    const got = await count(q);
+    check(`§7-3 ${q} — ${why}`, got === want, `count ${got}${got === want ? '' : ` (기대 ${want})`}`);
+  }
+
+  const ct = async v => (await get(`${BASE}/r/${ROOM}?limit=1&format=${v}`, { label: `format=${v}` }))
+    .headers.get('content-type') ?? '';
+  check('§7-3 format=json 은 JSON', (await ct('json')).includes('application/json'), await ct('json'));
+  check('§7-3 format=JSON 은 대소문자가 달라 적용되지 않음',
+        (await ct('JSON')).includes('text/plain'), await ct('JSON'));
+}
+
 // The service version the guide stamps in its header.
 {
   const stamped = (GUIDE.match(/서버 버전 \*\*([0-9.]+)\*\*/) || [])[1];
