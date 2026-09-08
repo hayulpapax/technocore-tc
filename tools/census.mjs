@@ -67,9 +67,60 @@ const NS_CAP = agent.limits?.notes_per_namespace ?? null;
 // The enumerated room total excludes unlisted p- rooms, which still consume the
 // cap, so that number is a floor on how full the service actually is.
 const roomsText = await getText(`${BASE}/rooms?limit=200`, { label: '/rooms' });
-const roomsHead = roomsText.split('\n')[0];
-const roomsSeen = Number(/of (\d+) rooms/.exec(roomsHead)?.[1]) || null;
-const roomsCap  = Number(/cap (\d+)/.exec(roomsHead)?.[1]) || null;
+
+// /rooms disagrees with itself. Repeated requests come back from what behave like two
+// backends with different data and different configuration: 24 samples on 2026-09-08 gave
+// "49993 rooms (cap 81920)" sixteen times and "62764 rooms (cap 163840)" eight times. That
+// is a 25% difference in the count, so it is not staleness of a few seconds.
+//
+// A single sample therefore records whichever instance answered, and this repository's own
+// history shows it: the cap column flips between 81920 and 163840 across days and the room
+// count jumps with it, which reads as a service that grew by 20,000 rooms overnight and
+// shrank back. It did not. Those rows are two populations interleaved.
+//
+// So sample the head line a few times and say what came back. The modal value goes in the
+// history so the column stays one number, and the disagreement is recorded beside it rather
+// than averaged away — an average of two backends is a number no instance ever reported.
+const HEAD_SAMPLES = 5;
+const heads = [roomsHead0(roomsText)];
+for (let i = 1; i < HEAD_SAMPLES; i++) {
+  try {
+    heads.push(roomsHead0(await getText(`${BASE}/rooms?limit=1&n=${i}`, { label: '/rooms sample' })));
+  } catch { /* one lost sample must not lose the others */ }
+}
+function roomsHead0(text) {
+  const head = text.split('\n')[0];
+  return {
+    seen: Number(/of (\d+) rooms/.exec(head)?.[1]) || null,
+    cap:  Number(/cap (\d+)/.exec(head)?.[1]) || null,
+  };
+}
+const modal = key => {
+  const counts = new Map();
+  for (const h of heads) if (h[key] !== null) counts.set(h[key], (counts.get(h[key]) ?? 0) + 1);
+  let best = null, bestN = 0;
+  for (const [v, n] of counts) if (n > bestN) { best = v; bestN = n; }
+  return best;
+};
+const roomsSeen = modal('seen');
+const roomsCap  = modal('cap');
+const roomsDistinct = [...new Set(heads.map(h => `${h.seen}/${h.cap}`))];
+
+// Not every difference is the split. Rooms are created while the samples are being taken,
+// so counts a few dozen apart are ordinary churn and flagging those would make this signal
+// fire every run and mean nothing. What is not churn: two different caps, which is a
+// configuration difference, or counts far enough apart that no rate of creation explains
+// them — the observed split was 49,993 against 62,764 in the same minute.
+const caps = [...new Set(heads.map(h => h.cap).filter(c => c !== null))];
+const seenValues = heads.map(h => h.seen).filter(v => v !== null);
+const spread = seenValues.length
+  ? (Math.max(...seenValues) - Math.min(...seenValues)) / Math.max(...seenValues) : 0;
+const roomsConsistent = caps.length <= 1 && spread <= 0.05;
+if (!roomsConsistent) {
+  process.stderr.write(`  /rooms disagrees across ${heads.length} samples` +
+    `${caps.length > 1 ? ` — two caps: ${caps.join(', ')}` : ` — counts ${(spread * 100).toFixed(1)}% apart`}` +
+    `: ${roomsDistinct.join(' , ')}\n`);
+}
 const notesLine = roomsText.split('\n').find(l => l.startsWith('# notes')) || '';
 const notesNow  = Number(/notes (\d+) of/.exec(notesLine)?.[1]) || null;
 const notesCap  = Number(/of (\d+)/.exec(notesLine)?.[1]) || null;
@@ -157,6 +208,9 @@ const snapshot = {
   legacy_headroom: NS_CAP === null || legacy === null ? null : NS_CAP - legacy,
   rooms_enumerated: roomsSeen,
   rooms_cap: roomsCap,
+  rooms_samples: heads.length,
+  rooms_consistent: roomsConsistent,
+  rooms_seen_by_sample: roomsDistinct,
   notes_total: notesNow,
   notes_total_cap: notesCap,
   notes_at_cap: notesNow !== null && notesCap !== null && notesNow >= notesCap,
