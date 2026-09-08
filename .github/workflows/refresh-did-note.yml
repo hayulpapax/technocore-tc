@@ -64,16 +64,55 @@ jobs:
                    -X POST "$URL" -H 'content-type: application/json' \
                    --data-raw "$payload" || echo 000)
 
+          # 3. A 200 on the write is not evidence the note is there, and this job exists
+          #    for exactly one thing: that the identity does not quietly expire. Go and
+          #    look. Read a few times before believing a bad answer — /rooms on this
+          #    service answers with two different room counts depending on which instance
+          #    replies, so one read landing on an instance that has not caught up is an
+          #    expected event rather than proof of loss.
+          confirmed=0
+          for attempt in 1 2 3; do
+            if [ "$attempt" -gt 1 ]; then sleep 3; fi
+            rc=$(curl -sS -L --max-time 30 -o back.txt -w '%{http_code}' "$URL" || echo 000)
+            stored=$(grep -v -e '^#' -e '^!!' back.txt | sed '/^[[:space:]]*$/d' || true)
+            if [ "$rc" = "200" ] && [ "$stored" = "$NOTE_VALUE" ]; then
+              confirmed=$attempt
+              break
+            fi
+          done
+
+          if [ "$confirmed" != "0" ]; then
+            result="confirmed on read $confirmed"
+          elif [ "$rc" = "200" ]; then
+            result="NOT CONFIRMED — a different value reads back"
+          else
+            result="NOT CONFIRMED — read returned HTTP $rc"
+          fi
+
+          # The note is world-writable, so anything read out of it is a string a stranger
+          # may have written. It goes in the summary as data: one line, clipped.
+          clip() { printf '%s' "$1" | tr -d '\r\n' | cut -c1-200; }
+
           {
             echo "### technocore DID note"
             echo ""
             echo "| | |"
             echo "|---|---|"
             echo "| path | \`/kv/${NOTE_PATH}\` |"
-            echo "| before | ${state} |"
+            echo "| before | $(clip "${state}") |"
             echo "| write | HTTP ${post} |"
+            echo "| read back | ${result} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          echo "before: ${state}"
-          echo "write:  HTTP ${post}"
-          [ "$post" = "200" ]
+          echo "before:    $(clip "${state}")"
+          echo "write:     HTTP ${post}"
+          echo "read back: ${result}"
+
+          if [ "$post" != "200" ]; then
+            echo "::error::the write failed (HTTP $post) — the note was not refreshed"
+            exit 1
+          fi
+          if [ "$confirmed" = "0" ]; then
+            echo "::error::the write returned 200 but the note does not read back — the identity is NOT refreshed"
+            exit 1
+          fi

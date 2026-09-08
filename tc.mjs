@@ -673,8 +673,41 @@ const cmds = {
     else                        console.log(`${stamp}  note intact — rewriting to reset the 7-day idle timer`);
 
     const r = await http('POST', `/kv/did-${shard}/${key}`, { value });
-    console.log(`${stamp}  ` + (r.status === 200 ? 'OK  ' + bodyOf(r.text) : `FAILED HTTP ${r.status}`));
-    if (r.status !== 200) process.exitCode = 1;
+    if (r.status !== 200) {
+      console.log(`${stamp}  FAILED HTTP ${r.status}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    // A 200 on the write is not evidence the note is there. This command's whole job is
+    // that the identity does not quietly vanish, so it has to go and look — reporting OK
+    // for a write that did not land is the exact failure it exists to prevent.
+    //
+    // Read a few times before believing a bad answer. /rooms on this service returns two
+    // different room counts and two different caps depending on which instance replies
+    // (tools/census.mjs), so a single read landing on an instance that has not caught up
+    // is an expected event, not evidence of loss. One confirming read is enough; the
+    // count is printed so a run that needed three says so.
+    let confirmed = false, attempts = 0, sawOther = null;
+    for (; attempts < 3 && !confirmed; attempts++) {
+      if (attempts) await sleep(1500);
+      const back = await http('GET', `/kv/did-${shard}/${key}`);
+      const stored = back.status === 200 ? bodyOf(back.text) : null;
+      if (stored === value) confirmed = true;
+      else if (stored !== null) sawOther = stored;
+    }
+
+    if (confirmed) {
+      console.log(`${stamp}  OK  written and read back${attempts > 1 ? ` (confirmed on read ${attempts})` : ''}`);
+      console.log(`${stamp}  ${value}`);
+    } else {
+      console.log(`${stamp}  FAILED — the write returned 200 but the note does not read back.`);
+      console.log(sawOther === null
+        ? `  ${attempts} reads found nothing at /kv/did-${shard}/${key}.`
+        : `  ${attempts} reads found a different value:\n    ${sawOther.slice(0, 160)}`);
+      console.log('  The identity is NOT refreshed. Do not treat this run as done.');
+      process.exitCode = 1;
+    }
   },
 };
 

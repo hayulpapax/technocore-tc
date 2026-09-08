@@ -50,6 +50,11 @@ jobs:
       - name: Test that verify names the right cause
         run: node tools/test-verify.mjs
 
+      # Skips silently where keys/ does not exist, which is every fork and this
+      # runner — the harness needs a published note to rewrite.
+      - name: Test that refresh confirms the note reads back
+        run: node tools/test-refresh.mjs
+
       - name: Census the DID notes
         run: node tools/census.mjs
 
