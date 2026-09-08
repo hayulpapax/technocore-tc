@@ -5,3 +5,8 @@ identity.json
 
 # 공식 문서 원본 스냅샷(로컬 참고용). 재배포하지 않고 링크로 대체한다.
 docs/
+
+# Windows reserved device name. A tool run with GITHUB_OUTPUT=/dev/null on this
+# platform leaves one behind, and git cannot index a path the OS reserves — it
+# blocks every later `git add -A` until it is ignored.
+nul

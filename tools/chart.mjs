@@ -31,9 +31,13 @@ const words = n => CARDINALS[n] ?? String(n);
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const pretty = d => `${+d.slice(8, 10)} ${MONTHS[+d.slice(5, 7) - 1]}`;
 
-const growth = last.sharded / first.sharded;
+// A ratio against a zero start is not a growth figure, it is 0/0. Say nothing rather than
+// print NaN on the image — an all-zero census is unlikely but a chart that renders "NaN×"
+// and commits itself is worse than one that omits a number it cannot compute.
+const growth = first.sharded > 0 ? last.sharded / first.sharded : null;
 // one decimal below 10x, none above — "28x" reads as a fact, "28.4x" reads as arithmetic
-const growthLabel = growth < 10 ? `${growth.toFixed(1)}×` : `${Math.round(growth)}×`;
+const growthLabel = growth === null ? ''
+  : growth < 10 ? `${growth.toFixed(1)}×` : `${Math.round(growth)}×`;
 
 const millions = last.sharded / 1e6;
 const headlineCount = millions >= 1 ? `${millions.toFixed(2)}M` : last.sharded.toLocaleString();
@@ -60,6 +64,10 @@ const X = i => L + (plotW * (t(rows[i].date) - t0)) / tSpan;
 
 // round a maximum up to a clean tick, leaving ~12% headroom above the peak
 const niceMax = peak => {
+  // log10(0) is -Infinity and the step collapses to 0, which makes every coordinate on the
+  // panel NaN — a chart that draws nothing and says nothing about why. Floor the axis
+  // instead so an empty series renders as a flat line at zero.
+  if (!(peak > 0)) return 1;
   const target = peak * 1.12;
   const step = Math.pow(10, Math.floor(Math.log10(target))) / 2;
   return Math.ceil(target / step) * step;

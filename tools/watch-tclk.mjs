@@ -34,12 +34,38 @@ const news = [];
 // so a comment posted from anywhere is picked up.
 const mine = await gh(`/search/issues?q=${encodeURIComponent(`repo:${REPO} commenter:${ME}`)}&per_page=50`);
 
+// A reply to a pull request usually is not an issue comment. GitHub keeps three separate
+// lists — issue comments, review submissions, and line comments inside a review — and
+// /issues/<n>/comments returns only the first. This watcher read that one list and
+// therefore reported "no replies" on PR #110 while two reviews sat on it, which is the
+// exact failure it exists to prevent. Ask for all three and merge them into one timeline.
+async function repliesOn(item) {
+  const n = item.number;
+  const out = [...await gh(`/repos/${REPO}/issues/${n}/comments?per_page=100`)]
+    .map(c => ({ login: c.user?.login, at: c.created_at, body: c.body ?? '', kind: 'comment' }));
+
+  if (item.pull_request) {
+    for (const r of await gh(`/repos/${REPO}/pulls/${n}/reviews?per_page=100`)) {
+      // An approval with no prose is still an answer; say what it was.
+      const verdict = r.state && r.state !== 'COMMENTED' ? `(${r.state.toLowerCase()}) ` : '';
+      const body = `${verdict}${r.body ?? ''}`.trim();
+      if (!body && !r.submitted_at) continue;
+      out.push({ login: r.user?.login, at: r.submitted_at, body, kind: 'review' });
+    }
+    for (const c of await gh(`/repos/${REPO}/pulls/${n}/comments?per_page=100`)) {
+      out.push({ login: c.user?.login, at: c.created_at, body: c.body ?? '',
+                 kind: `line comment on ${c.path}` });
+    }
+  }
+  return out.filter(c => c.at).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+}
+
 for (const item of mine.items ?? []) {
   const n = item.number;
-  const comments = await gh(`/repos/${REPO}/issues/${n}/comments?per_page=100`);
-  const ours = comments.filter(c => c.user?.login === ME);
+  const comments = await repliesOn(item);
+  const ours = comments.filter(c => c.login === ME);
   if (ours.length === 0) continue;                       // search matched something else
-  const others = comments.filter(c => c.user?.login !== ME);
+  const others = comments.filter(c => c.login !== ME);
   const seen = prev.threads?.[n];
 
   // The watermark is what we have already announced — never "after our last
@@ -48,27 +74,32 @@ for (const item of mine.items ?? []) {
   // replies it was answering. First sight of a thread starts the watermark at our
   // first comment, so we report the conversation from where we joined it and not
   // the whole history before that.
-  const watermark = seen?.watermark ?? ours[0].created_at;
-  const fresh = others.filter(c => c.created_at > watermark);
-  const newest = others.length ? others[others.length - 1].created_at : null;
+  const watermark = seen?.watermark ?? ours[0].at;
+  const fresh = others.filter(c => c.at > watermark);
+  const newest = others.length ? others[others.length - 1].at : null;
 
   now.threads[n] = {
     title: item.title,
     url: item.html_url,
     state: item.state,
-    our_last_comment: ours[ours.length - 1].created_at,
+    our_last_comment: ours[ours.length - 1].at,
     watermark: newest && newest > watermark ? newest : watermark,
-    replies_since_we_joined: others.filter(c => c.created_at > ours[0].created_at).length,
+    replies_since_we_joined: others.filter(c => c.at > ours[0].at).length,
     last_reply_at: newest,
   };
   if (fresh.length) {
     news.push({
       kind: 'reply', number: n, title: item.title, url: item.html_url,
-      who: [...new Set(fresh.map(c => c.user.login))],
-      bodies: fresh.map(c => ({ who: c.user.login, at: c.created_at, body: c.body ?? '' })),
+      who: [...new Set(fresh.map(c => c.login))],
+      bodies: fresh.map(c => ({ who: c.login, at: c.at, body: c.body, kind: c.kind })),
     });
   }
-  if (seen.state && seen.state !== item.state) {
+  // `seen` is undefined the first time a thread appears — which is exactly when we have
+  // just joined a new one, so this is the common case, not the rare one. Reading .state
+  // off it threw a TypeError and took the whole daily run down with it: no reply report,
+  // no census commit, no drift issue. The watermark above was already optional-chained;
+  // this line was not.
+  if (seen?.state && seen.state !== item.state) {
     news.push({ kind: 'state', number: n, title: item.title, url: item.html_url,
                 from: seen.state, to: item.state });
   }
@@ -88,7 +119,9 @@ const body = news.length ? [
     : [
         `### #${x.number} · ${x.who.join(', ')} 님의 답글`,
         `[${x.title}](${x.url})`, '',
-        ...x.bodies.flatMap(b => [`**${b.who}** · ${b.at}`, '', '> ' + clip(b.body).split('\n').join('\n> '), '']),
+        ...x.bodies.flatMap(b => [
+          `**${b.who}** · ${b.at}${b.kind && b.kind !== 'comment' ? ` · ${b.kind}` : ''}`, '',
+          '> ' + clip(b.body).split('\n').join('\n> '), '']),
       ]),
 ] .join('\n') : '';
 
