@@ -91,7 +91,8 @@ jobs:
           else
             title="Protocol documents changed on $(date -u +%Y-%m-%d)"
           fi
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$SUMMARY"
+          gh issue create --repo "$GITHUB_REPOSITORY" --assignee "$GITHUB_REPOSITORY_OWNER" \
+            --title "$title" --body "$SUMMARY"
 
       - name: Open an issue when flop-labs ships
         if: steps.releases.outputs.news == 'true'
@@ -101,6 +102,7 @@ jobs:
           HEADLINE: ${{ steps.releases.outputs.headline }}
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
+            --assignee "$GITHUB_REPOSITORY_OWNER" \
             --title "flop-labs 새 소식 — $HEADLINE" \
             --body "$SUMMARY"
 
@@ -111,6 +113,7 @@ jobs:
           SUMMARY: ${{ steps.tclk.outputs.summary }}
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
+            --assignee "$GITHUB_REPOSITORY_OWNER" \
             --title "tclk 답글 도착 — $(date -u +%Y-%m-%d)" \
             --body "$SUMMARY"
 
