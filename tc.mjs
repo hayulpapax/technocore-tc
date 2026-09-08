@@ -71,6 +71,17 @@ const sigBytes = sig => {
   return Buffer.from(sig, 'base64url');
 };
 
+/* A room can be reaped and recreated under the same name. When that happens seq
+   restarts, so a cursor — or an audit result — that names only the room is talking
+   about a conversation that may no longer exist. The service stamps which epoch a
+   response belongs to: X-Room-Generation on /export, and the `generation` field on
+   ?format=json. Anything this tool asserts about a room is scoped to one of them, so
+   it has to say which. */
+const generationOf = r => {
+  const v = r?.headers?.get?.('x-room-generation');
+  return v === null || v === undefined || v === '' ? null : v;
+};
+
 /* ---------- single-line sweep ----------
    Every character in Unicode general categories Cc, Cf, Cs, Co, Zl and Zp is
    replaced with a space before storage, and THEN THE ENDS ARE TRIMMED. That is
@@ -421,7 +432,20 @@ const cmds = {
     if (r.status !== 200) { show(r); return; }
     writeFileSync(out, r.text);
     const lines = r.text.trim() ? r.text.trim().split('\n').length : 0;
+    const gen = generationOf(r);
+
+    // The body stays exactly what the service sent — the manual's point is that
+    // `curl .../export > room.jsonl` is a clean record file, so the epoch goes in a
+    // sidecar rather than a prelude. Without it a saved export cannot say which
+    // conversation it is, and `audit --file` would have to guess.
+    const meta = out + '.meta.json';
+    writeFileSync(meta, JSON.stringify({
+      room, generation: gen, records: lines,
+      exported_at: new Date().toISOString(), source: r.url,
+    }, null, 1) + '\n');
+
     console.log(`${out}  ${lines.toLocaleString()} records  ${(r.text.length / 1024).toFixed(1)} KiB`);
+    console.log(`${meta}  generation ${gen ?? 'unknown'}`);
   },
 
   // Re-verify every signed record in a room's export, offline.
@@ -433,8 +457,25 @@ const cmds = {
   async audit(args) {
     const room = need(args[0], 'room');
     const file = pairs(args).find(([k]) => k === 'file')?.[1];
-    const text = file ? readFileSync(file, 'utf8')
-                      : (await http('GET', `/r/${room}/export`)).text;
+
+    // Live, the epoch comes off the response. From a file it comes off the sidecar
+    // `export` wrote beside it; a file without one is audited all the same, but the
+    // report says the epoch is unknown rather than leaving the reader to assume the
+    // room still holds these records.
+    let text, generation, genSource;
+    if (file) {
+      text = readFileSync(file, 'utf8');
+      try {
+        const meta = JSON.parse(readFileSync(file + '.meta.json', 'utf8'));
+        generation = meta.generation ?? null;
+        genSource = `from ${file}.meta.json`;
+      } catch { generation = null; genSource = 'no sidecar beside the file'; }
+    } else {
+      const r = await http('GET', `/r/${room}/export`);
+      text = r.text;
+      generation = generationOf(r);
+      genSource = generation === null ? 'service sent no X-Room-Generation' : 'live';
+    }
     const lines = text.trim() ? text.trim().split('\n') : [];
 
     let signed = 0, ok = 0, bad = 0, unparsed = 0, naiveWouldFail = 0;
@@ -467,6 +508,7 @@ const cmds = {
     }
 
     console.log(`room            : ${room}`);
+    console.log(`generation      : ${generation ?? 'unknown'}  (${genSource})`);
     console.log(`records         : ${lines.length.toLocaleString()}` +
                 (unparsed ? `  (${unparsed} unparseable)` : ''));
     console.log(`signed records  : ${signed.toLocaleString()}`);
@@ -477,6 +519,13 @@ const cmds = {
     for (const f of failures) {
       console.log(`\n  seq ${f.seq} from ${String(f.from).slice(0, 26)}…` +
                   (f._err ? `\n    ${f._err}` : '\n    signature does not verify'));
+    }
+    // The verdict above is about one conversation, not one name. Saying so is the
+    // point of reading the header at all.
+    if (generation !== null) {
+      console.log(`\nThis covers generation ${generation} of /r/${room}. A room reaped and\n` +
+                  `recreated under the same name is a different conversation: seq values\n` +
+                  `from one do not refer to records in the other.`);
     }
     if (bad) process.exitCode = 1;
   },
@@ -600,6 +649,7 @@ if (!cmds[cmd]) {
                                    diagnose a rejected signature, offline
   node tc.mjs read <room> [--since=N --limit=N --wait=N --format=json]
   node tc.mjs export <room> [--out=<file>]   the room's stored file, raw JSONL
+                                             (+ <file>.meta.json, the epoch it came from)
   node tc.mjs audit <room> [--file=<file>]   re-verify every signature, offline
   node tc.mjs rooms | events | limits | config
   node tc.mjs kv-get <ns> [key]
