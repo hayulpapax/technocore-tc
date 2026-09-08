@@ -38,9 +38,23 @@ const AGENT = 'https://technocore.chat/.well-known/agent.json';
 const auth = process.env.GITHUB_TOKEN ? { authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
 const gh = path => getJson(`${API}${path}`, { label: path, headers: { accept: 'application/vnd.github+json', ...auth } });
 
-const prev = existsSync(STATE)
-  ? JSON.parse(readFileSync(STATE, 'utf8'))
-  : null;
+// A half-written state file — a run killed mid-write, a partial checkout — used to throw
+// here and take the whole daily job down with it: no census commit, no drift issue, no
+// briefing. That is the wrong failure for a watcher whose entire job is to make sure
+// something gets said.
+//
+// So a corrupt file is treated as no file: the run re-seeds and announces nothing, which
+// is the safe direction. But re-seeding silently would hide a real release behind a
+// housekeeping error, so the rebuild is itself reported.
+let prev = null, stateWasCorrupt = false;
+if (existsSync(STATE)) {
+  try {
+    prev = JSON.parse(readFileSync(STATE, 'utf8'));
+  } catch (err) {
+    stateWasCorrupt = true;
+    process.stderr.write(`  state file unreadable (${err.message}) — reseeding\n`);
+  }
+}
 const first = prev === null;
 
 const seenReleases = new Set(prev?.releases ?? []);
@@ -122,13 +136,27 @@ writeFileSync(STATE, JSON.stringify({
 }, null, 1) + '\n');
 
 const count = news.releases.length + news.repos.length + (news.version ? 1 : 0);
+// A rebuild is not news about flop-labs, but it is news about this watcher: a release
+// that landed while the state was unreadable will never be announced, because reseeding
+// records it as already seen. Say so rather than let the silence pass for a quiet day.
+const report = count > 0 || stateWasCorrupt;
 console.log(first
-  ? `seeded: ${seenRepos.size} repos, ${seenReleases.size} releases, live ${liveVersion}`
+  ? `${stateWasCorrupt ? 'RESEEDED after a corrupt state file' : 'seeded'}: ` +
+    `${seenRepos.size} repos, ${seenReleases.size} releases, live ${liveVersion}`
   : `${count} new: ${news.releases.length} releases, ${news.repos.length} repos` +
     (news.version ? `, live ${news.version.from} -> ${news.version.to}` : ''));
 
 if (process.env.GITHUB_OUTPUT) {
   const lines = [];
+
+  if (stateWasCorrupt) {
+    lines.push('## 이 감시기의 상태 파일이 손상되어 있었습니다', '',
+      '`data/releases-watch.json` 을 읽지 못해 이번 실행에서 새로 만들었습니다.',
+      '상태가 깨져 있는 동안 나온 릴리스나 새 저장소는 **이미 본 것으로 기록되어',
+      '앞으로도 보고되지 않습니다.** 놓친 것이 없는지 직접 확인하세요:', '',
+      '- <https://github.com/orgs/flop-labs/repositories>',
+      '- <https://github.com/flop-labs/technocore-chat/releases>', '');
+  }
 
   if (news.repos.length) {
     lines.push('## A new repository appeared in flop-labs', '',
@@ -157,9 +185,12 @@ if (process.env.GITHUB_OUTPUT) {
   }
 
   writeFileSync(process.env.GITHUB_OUTPUT,
-    `news=${count > 0}\n` +
+    `news=${report}\n` +
+    // The workflow builds an issue title out of this, so it must never be empty — a
+    // report with a blank headline arrives as "flop-labs 새 소식 — " and says nothing.
     `headline=${news.version ? `technocore.chat ${news.version.to}` :
                 news.repos.length ? `new repo: ${news.repos[0].name}` :
-                news.releases.length ? `${news.releases[0].repo} ${news.releases[0].tag}` : ''}\n` +
+                news.releases.length ? `${news.releases[0].repo} ${news.releases[0].tag}` :
+                stateWasCorrupt ? '감시기 상태 파일 손상 — 놓친 소식이 있을 수 있습니다' : ''}\n` +
     `summary<<RELEASES_EOF\n${lines.join('\n')}\nRELEASES_EOF\n`, { flag: 'a' });
 }
