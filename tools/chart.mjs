@@ -117,13 +117,15 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" wid
   <text x="${L}" y="122" font-family="Space Mono, monospace" font-size="36" font-weight="700"
         fill="#F5F7FA">${headline}</text>
 
+  <!-- heading row: the label opposite it shares this baseline, which keeps the growth
+       figure off the plot however the series ends -->
   <text x="${L}" y="172" font-family="Space Mono, monospace" font-size="16" font-weight="700"
         letter-spacing="2" fill="#9AA4B2">SHARDED PATH  /kv/did-&lt;2&gt;/&lt;14&gt;</text>
   ${gridFor(ticksFor(aMax), aY)}
   <path d="${shardedLine} L${X(rows.length - 1).toFixed(1)} ${aY(0).toFixed(1)} L${X(0).toFixed(1)} ${aY(0).toFixed(1)} Z"
         fill="#00B4D8" fill-opacity="0.12"/>
   <path d="${shardedLine}" fill="none" stroke="#00B4D8" stroke-width="3.5" stroke-linejoin="round"/>
-  <text x="${W - R}" y="${(aY(last.sharded) - 20).toFixed(1)}" text-anchor="end"
+  <text x="${W - R}" y="172" text-anchor="end"
         font-family="Space Mono, monospace" font-size="20" font-weight="700" fill="#00B4D8">
     ${first.sharded.toLocaleString()} &#8594; ${last.sharded.toLocaleString()}   &#183;   ${growthLabel}</text>
 
