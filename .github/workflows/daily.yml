@@ -38,8 +38,14 @@ jobs:
       # Two seconds, no network: every tool here goes through http.mjs, so a wrong
       # retry decision in it is a wrong decision in all of them at once. Runs first —
       # if the retry layer is broken, a failed census would only obscure that.
+      # Both offline, both a few seconds, both ahead of anything that talks to the
+      # service: a broken retry layer or a checker that accepts a forged delegation
+      # should be named as such, not discovered as a census that read nothing.
       - name: Test the retry layer
         run: node tools/test-http.mjs
+
+      - name: Test that a planted delegation is refused
+        run: node tools/test-delegation.mjs
 
       - name: Census the DID notes
         run: node tools/census.mjs

@@ -303,11 +303,34 @@ const cmds = {
     // space. Find records by scanning the fields for the token and taking the five
     // after it, never by splitting lines.
     const fields = bodyOf(r.text).split(/\s+/).filter(Boolean);
-    const root = fields.find(f => f.startsWith('did:key:z'));
+    const carried = fields.find(f => f.startsWith('did:key:z'));
+
+    // Verify against the DID this note BELONGS to, never the one it carries.
+    //
+    // The note's path is derived from `did` — that is what makes it that identity's note.
+    // Its contents are not: every note on this service is world-writable, so the did:key
+    // written inside is a string a stranger may have put there. Checking a record against
+    // the DID it names is checking the attacker's signature against the attacker's key,
+    // which of course passes: overwriting a note with your own DID and your own
+    // delegation made this client print "valid" for it. The record was genuinely signed —
+    // just not by the identity whose note it was sitting in.
+    //
+    // The manual's guarantee is precisely this and no more: "the root DID is inside the
+    // signature, so a record copied out of somebody else's note does not survive being
+    // checked against yours." Against yours.
+    const root = did;
     console.log('note     : /kv/did-' + shard + '/' + key);
-    console.log('root DID : ' + (root ?? '(none carried in the note)'));
-    if (root && root !== did)
-      console.log('  warning: the note carries a different DID than the one it was looked up by');
+    console.log('checking against : ' + root + '  (the DID this note belongs to)');
+    if (carried && carried !== root) {
+      console.log('carried in note  : ' + carried);
+      console.log('\n  *** THIS NOTE CARRIES A DIFFERENT DID THAN THE ONE IT BELONGS TO. ***');
+      console.log('  Notes are world-writable. Either this note was overwritten by someone');
+      console.log('  else, or you are reading the wrong path. Nothing in it can be trusted');
+      console.log('  as a statement by ' + root.slice(0, 24) + '….');
+      process.exitCode = 1;
+    } else if (!carried) {
+      console.log('carried in note  : (none)');
+    }
 
     const now = Math.floor(Date.now() / 1000);
     let found = 0, ok = 0, bad = 0, expired = 0;
