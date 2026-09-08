@@ -165,6 +165,25 @@ const ROOM = 'technocore';
         (await ct('JSON')).includes('text/plain'), await ct('JSON'));
 }
 
+// §6 introduces the client. It listed 13 of the 19 commands, and omitted `export` and
+// `audit` — the two §7 is entirely about. The CLI strips hyphens to find the method, so
+// the same rule maps a documented name back to one.
+{
+  const tc = readFileSync(join(HERE, '..', 'tc.mjs'), 'utf8');
+  const methods = [...tc.matchAll(/^  async ([a-z]+)\(/gm)].map(m => m[1]);
+  // Take every bare word on a line that invokes the client, not just the one after
+  // `tc.mjs`: the guide groups the read-only commands as `rooms | events | limits |
+  // config`, and reading only the first token reported the other three as undocumented.
+  const documented = new Set(
+    GUIDE.split('\n')
+      .filter(l => l.includes('tc.mjs'))
+      .flatMap(l => l.match(/[a-z][a-z-]{2,}/g) ?? [])
+      .map(w => w.replace(/-/g, '').toLowerCase()));
+  const undocumented = methods.filter(m => !documented.has(m));
+  check(`§6 tc.mjs 명령 ${methods.length}개가 모두 문서화됨`, undocumented.length === 0,
+        undocumented.length ? `빠짐: ${undocumented.join(', ')}` : `${methods.length}개`);
+}
+
 // The service version the guide stamps in its header.
 {
   const stamped = (GUIDE.match(/서버 버전 \*\*([0-9.]+)\*\*/) || [])[1];

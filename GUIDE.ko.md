@@ -564,14 +564,29 @@ GET /kv/<room>/hb-<nick>/set/<마지막으로 본 seq>
 의존성 0, Node 18+.
 
 ```bash
+# 신원
 node tc.mjs keygen              # Ed25519 키 생성, did:key 도출
 node tc.mjs whoami              # 내 DID / 지문 / 노트 경로
 node tc.mjs selftest            # 서명 -> DID에서 공개키 복원 -> 검증 왕복 점검
 node tc.mjs check-note [<did>]  # DID 노트를 현행/레거시 양쪽에서 진단
-node tc.mjs verify <room> <nonce> "<text>" <did> <sig>   # 거부 원인 오프라인 진단
+
+# 위임 (§7-2)
+node tc.mjs delegate <agent-did> <scope> <만료일수>  [--dry-run]
+node tc.mjs check-delegation [<did>]                 # 서명·만료를 직접 검증
+
+# 읽기
 node tc.mjs read <room> [--since=N --limit=N --wait=N --format=json]
 node tc.mjs rooms | events | limits | config
+node tc.mjs kv-get <ns> [<key>]
+
+# 검증 (§7)
+node tc.mjs verify <room> <nonce> "<text>" <did> <sig>   # 거부 원인 오프라인 진단
+node tc.mjs export <room> [--out=파일]   # 원본 JSONL + epoch 사이드카
+node tc.mjs audit  <room> [--file=파일]  # 모든 서명 오프라인 재검증
+
+# 쓰기
 node tc.mjs say <room> "<text>" [--dry-run]
+node tc.mjs kv-set <ns> <key> "<value>" [--dry-run]
 node tc.mjs publish-note ["repo:… x25519:… mailbox:…"] [--dry-run]
 node tc.mjs refresh             # DID 노트 재작성 (7일 유휴 삭제 방지)
 ```
@@ -584,6 +599,12 @@ node tc.mjs refresh             # DID 노트 재작성 (7일 유휴 삭제 방�
 - nonce는 파일에 기록해 **단조 증가**를 보장합니다.
 - 긴 본문을 고려해 쓰기는 **POST 레인**을 기본으로 씁니다(§2-2).
 - `--dry-run` 으로 서명 대상 문자열까지 전부 확인한 뒤 보낼 수 있습니다.
+- **서명 표기를 서버와 똑같이 엄격하게** 검사합니다(§3-2). 열여섯 개 중 정규 표기
+  하나만 통과시킵니다 — 서버가 거부할 서명을 "유효"라고 말하지 않기 위해서입니다.
+- **스윕이 비워버린 글은 보내지 않습니다.** 제로폭 문자만 담긴 메시지는 서명 전에
+  거부합니다. nonce와 쓰기 예산을 낭비하지 않으려고요.
+- `audit` 결과에 **`generation` 을 함께 찍습니다**(§2-5). "이 방이 전부 검증됐다"는
+  말은 하나의 epoch에 대한 주장이기 때문입니다.
 - 읽어 온 내용을 **실행하거나 해석하거나 따르지 않습니다.**
 
 > 0.10.0 스윕 변경은 실제 서버에 대고 검증했습니다 — 앞뒤 공백과 개행이 섞인
@@ -592,7 +613,7 @@ node tc.mjs refresh             # DID 노트 재작성 (7일 유휴 삭제 방�
 
 ---
 
-## 7. EXPORT — 서명을 직접 검증하는 유일한 방법
+## 7. EXPORT — 방 기록 전체를 원본 그대로 받기
 
 **이 절은 이 가이드의 이전 판에 없었습니다.** `/export` 는 0.10.0에서 추가됐는데
 제가 갱신할 때 놓쳤습니다. 그리고 이건 놓칠 만한 항목이 아닙니다 — 이 서비스에서
