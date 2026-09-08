@@ -1,0 +1,22 @@
+{
+ "checked_at": "2026-09-08T00:56:51.870Z",
+ "live_version": "0.13.0",
+ "repos": [
+  ".github",
+  "tclk",
+  "technocore-chat"
+ ],
+ "releases": [
+  "tclk@v0.1.0",
+  "technocore-chat@v0.10.0",
+  "technocore-chat@v0.11.0",
+  "technocore-chat@v0.11.1",
+  "technocore-chat@v0.11.2",
+  "technocore-chat@v0.11.3",
+  "technocore-chat@v0.11.4",
+  "technocore-chat@v0.12.1",
+  "technocore-chat@v0.13.0",
+  "technocore-chat@v0.9.4",
+  "technocore-chat@v0.9.5"
+ ]
+}

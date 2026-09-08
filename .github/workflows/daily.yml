@@ -1,8 +1,9 @@
 # Daily protocol watch.
 #
-# Two jobs' worth of work, one commit:
-#   census — counts every published DID note (257 namespace listings, no writes)
-#   drift  — fingerprints the protocol documents and reports when they move
+# Three watches, one commit:
+#   census   — counts every published DID note (257 namespace listings, no writes)
+#   drift    — fingerprints the protocol documents and reports when they move
+#   releases — flop-labs tags and new repositories, and the version being served
 #
 # The commit is also what keeps this repository's scheduled workflows alive:
 # GitHub disables them after 60 days with no repository activity, and a job that
@@ -46,6 +47,15 @@ jobs:
         id: drift
         run: node tools/drift.mjs
 
+      # A web search and an inbox both report "nothing new" almost every day, because
+      # this project publishes as tags and repositories rather than as articles. Five
+      # versions shipped in nine days while the news said nothing.
+      - name: Check flop-labs for releases and new repositories
+        id: releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/watch-releases.mjs
+
       # Replies to comments this repository left on flop-labs/tclk. Tracked here
       # rather than by notification because a reply is easy to miss in a repo
       # moving this fast, and because the state file makes it announce once.
@@ -82,6 +92,17 @@ jobs:
             title="Protocol documents changed on $(date -u +%Y-%m-%d)"
           fi
           gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$SUMMARY"
+
+      - name: Open an issue when flop-labs ships
+        if: steps.releases.outputs.news == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.releases.outputs.summary }}
+          HEADLINE: ${{ steps.releases.outputs.headline }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "flop-labs 새 소식 — $HEADLINE" \
+            --body "$SUMMARY"
 
       - name: Open an issue when someone replies on tclk
         if: steps.tclk.outputs.replied == 'true'
