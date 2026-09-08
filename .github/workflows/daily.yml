@@ -65,12 +65,27 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-tclk.mjs
 
+      # One Korean page saying what today held, written from the steps above rather
+      # than fetched again. The daily briefing reads this out of a checkout, which is
+      # the one channel that does not depend on notification mail arriving.
+      - name: Write the Korean briefing
+        env:
+          DRIFT_CHANGED: ${{ steps.drift.outputs.changed }}
+          DRIFT_PROJECT: ${{ steps.drift.outputs.project_changed }}
+          DRIFT_SUMMARY: ${{ steps.drift.outputs.summary }}
+          RELEASES_NEWS: ${{ steps.releases.outputs.news }}
+          RELEASES_HEADLINE: ${{ steps.releases.outputs.headline }}
+          RELEASES_SUMMARY: ${{ steps.releases.outputs.summary }}
+          TCLK_REPLIED: ${{ steps.tclk.outputs.replied }}
+          TCLK_SUMMARY: ${{ steps.tclk.outputs.summary }}
+        run: node tools/briefing.mjs
+
       - name: Commit what changed
         run: |
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data CENSUS.md chart
+          git add data CENSUS.md chart BRIEFING.ko.md
           if git diff --cached --quiet; then
             echo "nothing changed"
             exit 0

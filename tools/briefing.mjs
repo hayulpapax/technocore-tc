@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+// Write BRIEFING.ko.md — one Korean page saying what changed today, and saying so
+// explicitly when nothing did.
+//
+// Why a committed file rather than a notification: the daily briefing that reads this
+// runs somewhere with no network except a mailbox, and the mail it was supposed to read
+// never arrives (GitHub does not mail the owner about a bot's issue in their own
+// repository). A file in the repository has no such gap — whatever can check the
+// repository out can read it, and it is the same text every reader sees.
+//
+// The other half of the reason is that "nothing happened" has to be *stated*. A reader
+// that finds no news cannot tell the difference between a quiet day and a broken watch.
+// This file always says which of the two it was, and when it last looked.
+//
+// The findings come in as environment variables from the steps that produced them, so
+// this stays a formatter and never re-fetches anything. Census numbers are read from the
+// history file, which is the same source the chart draws.
+
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, '..');
+
+const rows = readFileSync(join(ROOT, 'data', 'census-history.tsv'), 'utf8')
+  .trim().split('\n').slice(1).map(l => {
+    const f = l.split('\t');
+    return {
+      date: f[0], at: f[1], version: f[2],
+      sharded: +f[3], legacy: +f[4], cap: +f[5], atCap: f[6] === 'true',
+      unreadable: +f[10], median: +f[12],
+    };
+  });
+const last = rows[rows.length - 1];
+const prev = rows[rows.length - 2];
+
+const env = k => (process.env[k] || '').trim();
+const on = k => env(k) === 'true';
+
+// KST is what the reader thinks in; UTC is what the service stamps. Both, always — a
+// briefing that gives only one of them makes the reader do arithmetic to place an event.
+const kst = iso => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '(시각 불명)';
+  const k = new Date(d.getTime() + 9 * 3600 * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return `${k.getUTCFullYear()}-${p(k.getUTCMonth() + 1)}-${p(k.getUTCDate())} ` +
+         `${p(k.getUTCHours())}:${p(k.getUTCMinutes())} KST`;
+};
+
+const num = n => n.toLocaleString('en-US');
+const delta = (now, before) => {
+  if (before === undefined) return '—';
+  const d = now - before;
+  if (d === 0) return '변화 없음';
+  const pct = before ? ((100 * d) / before).toFixed(1) : '?';
+  return `${d > 0 ? '+' : ''}${num(d)} (${d > 0 ? '+' : ''}${pct}%)`;
+};
+
+// A six-figure swing in the population is news on its own — this repository has published
+// claims about that number, and a day it moves by a sixth is not a quiet day.
+const BIG_MOVE = 100_000;
+const move = prev ? last.sharded - prev.sharded : 0;
+const bigMove = Math.abs(move) >= BIG_MOVE;
+
+const drift    = on('DRIFT_CHANGED');
+const project  = on('DRIFT_PROJECT');
+const releases = on('RELEASES_NEWS');
+const tclk     = on('TCLK_REPLIED');
+const quiet    = !drift && !releases && !tclk && !bigMove;
+
+// The headline is what a push notification would carry, so it names the most consequential
+// thing first: the project site, then a shipped version, then a reply, then the numbers.
+const headline =
+  project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
+: releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
+: drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
+: tclk     ? 'tclk에 남긴 글에 답글이 달렸습니다'
+: bigMove  ? `노트 수가 하루 만에 ${num(Math.abs(move))}개 ${move < 0 ? '줄었습니다' : '늘었습니다'}`
+:            '새 소식 없음 — 감시는 정상 동작했습니다';
+
+const out = [
+  `# FLOP 일일 브리핑 — ${last.date}`,
+  '',
+  `**${headline}**`,
+  '',
+  `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC)`,
+  `- 서비스 버전: \`${last.version}\`${prev && prev.version !== last.version ? ` — 어제 \`${prev.version}\` 에서 올라감` : ''}`,
+  `- 조사 횟수: ${rows.length}회 (${rows[0].date}부터)`,
+  '',
+  '## 수치',
+  '',
+  '| | 오늘 | 어제 대비 |',
+  '|---|---|---|',
+  `| 현행 샤딩 경로 노트 | ${num(last.sharded)} | ${delta(last.sharded, prev?.sharded)} |`,
+  `| 레거시 경로 노트 | ${num(last.legacy)} | ${delta(last.legacy, prev?.legacy)} |`,
+  `| 레거시 상한 | ${num(last.cap)}${last.atCap ? ' **(상한 도달)**' : ''} | ${delta(last.cap, prev?.cap)} |`,
+  `| 샤드당 중앙값 | ${num(last.median)} | ${delta(last.median, prev?.median)} |`,
+  '',
+  last.unreadable > 0
+    ? `> ⚠️ 샤드 ${last.unreadable}개를 읽지 못했습니다. 위 수치는 실제보다 **적게** 나온 값입니다.`
+    : '읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.',
+  '',
+];
+
+// A large move is worth naming even on a day nothing else happened, because the count
+// falling is the one thing this repository has published a claim about.
+if (bigMove) {
+  const d = move;
+  out.push(
+    d < 0 ? '## 하루 만에 크게 줄었습니다' : '## 하루 만에 크게 늘었습니다', '',
+    `노트 수가 ${num(prev.sharded)} → ${num(last.sharded)} 로 ${num(Math.abs(d))}개 ` +
+    `${d < 0 ? '감소' : '증가'}했습니다. 샤드당 중앙값도 ${num(prev.median)} → ${num(last.median)} 로 ` +
+    `같이 움직였으므로, 일부 샤드만의 문제가 아니라 전체에 걸친 변화입니다.`, '',
+    d < 0 ? '노트는 7일간 쓰기가 없으면 삭제됩니다(`retention_seconds: 604800`). ' +
+            '7일 전에 크게 늘었다면 그 물결이 만료된 것과 일치합니다 — 다만 서버가 ' +
+            '그렇게 공지한 것은 아니므로 단정하지는 마십시오.' : '', '');
+}
+
+if (project || drift) {
+  out.push('## 문서가 바뀌었습니다', '', env('DRIFT_SUMMARY') || '(요약 없음)', '');
+}
+if (releases) {
+  out.push('## flop-labs 배포/저장소', '', env('RELEASES_SUMMARY') || '(요약 없음)', '');
+}
+if (tclk) {
+  out.push('## tclk 답글', '', env('TCLK_SUMMARY') || '(요약 없음)', '');
+}
+
+if (quiet) {
+  out.push(
+    '## 오늘 확인한 것들 (전부 변화 없음)', '',
+    '- technocore.chat 프로토콜 문서 7종 — 변화 없음',
+    '- flop.finance 페이지 4종 — 변화 없음',
+    '- flop-labs 조직의 새 릴리스·새 저장소 — 없음',
+    '- tclk에 남긴 글의 답글 — 없음', '',
+    '감시가 멈춘 것이 아니라, 실제로 조용한 하루였습니다.', '');
+}
+
+out.push('---', '',
+  '이 파일은 `tools/briefing.mjs` 가 매일 자동으로 다시 씁니다. 사람이 고치면 다음 실행에 덮어씁니다.',
+  '수치의 원본은 [`data/census-history.tsv`](data/census-history.tsv), 그래프는 [`CENSUS.md`](CENSUS.md) 에 있습니다.');
+
+writeFileSync(join(ROOT, 'BRIEFING.ko.md'), out.join('\n') + '\n');
+console.log(`briefing written: ${quiet ? 'quiet day' : 'news'} — ${headline}`);
