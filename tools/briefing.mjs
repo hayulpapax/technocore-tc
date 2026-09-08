@@ -80,9 +80,21 @@ const headline =
 : bigMove  ? `노트 수가 하루 만에 ${num(Math.abs(move))}개 ${move < 0 ? '줄었습니다' : '늘었습니다'}`
 :            '새 소식 없음 — 감시는 정상 동작했습니다';
 
+// If the census step fails, this file is never rewritten and the previous day's copy stays
+// in the repository — where the routine that reads it has no way to tell yesterday's news
+// from today's. Stamp the age against the moment of writing so a stale copy says so itself,
+// rather than relying on whoever reads it to check a timestamp further down the page.
+const ageHours = (Date.now() - new Date(last.at).getTime()) / 3_600_000;
+const stale = !(ageHours < 30);           // NaN-safe: an unparseable stamp counts as stale
+
 const out = [
   `# FLOP 일일 브리핑 — ${last.date}`,
   '',
+  ...(stale ? [
+    `> ⚠️ **이 브리핑은 오래됐습니다.** 가장 최근 조사가 ` +
+    `${Number.isFinite(ageHours) ? Math.round(ageHours) + '시간 전' : '언제인지 불명'}입니다. ` +
+    `감시가 멈췄을 수 있으니, 아래 내용을 오늘 소식으로 보고하지 마십시오.`, '',
+  ] : []),
   `**${headline}**`,
   '',
   `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC)`,
