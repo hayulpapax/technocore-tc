@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-09-08T04:43:59.224Z",
+ "checked_at": "2026-09-08T04:55:45.078Z",
  "threads": {
   "93": {
    "title": "`foldTranscript` trusts the export's row order and never checks for a gap — deleting one signed row folds a claimed deal to `refunded`, with no `BAD` verdict",
