@@ -41,10 +41,35 @@ function b58decode(s) {
   }
   let hex = n.toString(16);
   if (hex.length % 2) hex = '0' + hex;
-  return Buffer.from(hex, 'hex');
+  const body = n === 0n ? Buffer.alloc(0) : Buffer.from(hex, 'hex');
+  // A leading zero byte contributes nothing to the integer, so it cannot survive the
+  // round trip through one: b58encode writes each as a '1' and the decode has to put
+  // them back, or decode(encode(x)) !== x for any x starting with 0x00. It is latent
+  // for an ed25519 did:key, whose multicodec prefix is 0xed — which is exactly why it
+  // would have sat here unnoticed. technocore.chat fixed the same bug in 0.11.4.
+  let zeros = 0;
+  for (const ch of s) { if (ch === '1') zeros++; else break; }
+  return Buffer.concat([Buffer.alloc(zeros), body]);
 }
 const b64url = buf => Buffer.from(buf).toString('base64')
   .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+/* A 64-byte Ed25519 signature has exactly one base64url spelling. The final character
+   carries two significant bits and four bits of padding, so sixteen characters decode to
+   the identical 64 bytes and the service accepts only the one whose padding bits are
+   zero — last character A, Q, g or w (/auth.md, and 0.12.0 in the CHANGELOG).
+
+   Buffer.from(s, 'base64url') accepts all sixteen. Using it bare made this tool report a
+   signature as good for fifteen spellings technocore.chat refuses, which is the one thing
+   an offline auditor must never do: its whole purpose is to reach the service's verdict
+   without asking the service. Every signature this file decodes goes through here. */
+const SIG_CANONICAL = /^[A-Za-z0-9_-]{85}[AQgw]$/;
+const sigBytes = sig => {
+  if (typeof sig !== 'string' || !SIG_CANONICAL.test(sig)) {
+    throw new Error('signature is not canonical base64url: expected 86 chars ending A, Q, g or w');
+  }
+  return Buffer.from(sig, 'base64url');
+};
 
 /* ---------- single-line sweep ----------
    Every character in Unicode general categories Cc, Cf, Cs, Co, Zl and Zp is
@@ -207,11 +232,11 @@ const cmds = {
     const payload = 'lobby|1|selftest';
     const { did, sig } = signPayload(payload);
     const ok = edVerify(null, Buffer.from(payload, 'utf8'),
-                        publicKeyFromDid(did), Buffer.from(sig, 'base64url'));
+                        publicKeyFromDid(did), sigBytes(sig));
     console.log('did matches identity          : ' + (did === id.did));
-    console.log('signature is 86 base64url     : ' + (sig.length === 86));
+    console.log('signature is canonical b64url : ' + SIG_CANONICAL.test(sig));
     console.log('verifies against pubkey in DID: ' + ok);
-    const passed = ok && did === id.did && sig.length === 86;
+    const passed = ok && did === id.did && SIG_CANONICAL.test(sig);
     console.log(passed ? '\nPASS — the server\'s verification path, reproduced offline.' : '\nFAIL');
     if (!passed) process.exitCode = 1;
   },
@@ -280,7 +305,7 @@ const cmds = {
       try {
         valid = edVerify(null,
           Buffer.from(`delegate|${root}|${agent}|${scope}|${expires}|${nonce}`, 'utf8'),
-          publicKeyFromDid(root), Buffer.from(sig, 'base64url'));
+          publicKeyFromDid(root), sigBytes(sig));
       } catch (e) { console.log('    UNVERIFIABLE — ' + e.message); bad++; continue; }
 
       if (!valid) { console.log('    SIGNATURE DOES NOT VERIFY — not issued by this root; ignore it'); bad++; continue; }
@@ -350,7 +375,7 @@ const cmds = {
     const checks = [
       ['room name matches ^[a-z0-9][a-z0-9_-]{0,47}$', /^[a-z0-9][a-z0-9_-]{0,47}$/.test(room)],
       ['nonce is 1-19 digits',                          /^[0-9]{1,19}$/.test(nonce)],
-      ['signature is 86 base64url chars',               /^[A-Za-z0-9_-]{86}$/.test(sig)],
+      ['signature is canonical base64url',              SIG_CANONICAL.test(sig)],
       ['text is <= 4096 chars',                         [...swept].length <= 4096],
       ['text survives the sweep unchanged',             swept === rawText],
       ['text is unchanged by NFC normalization',        rawText.normalize('NFC') === rawText],
@@ -358,7 +383,7 @@ const cmds = {
     let sigOk = false;
     try {
       sigOk = edVerify(null, Buffer.from(`${room}|${nonce}|${swept}`, 'utf8'),
-                       publicKeyFromDid(did), Buffer.from(sig, 'base64url'));
+                       publicKeyFromDid(did), sigBytes(sig));
     } catch { checks.push(['DID parses as Ed25519 did:key', false]); }
     checks.push(['signature covers `<room>|<nonce>|<swept text>`', sigOk]);
     for (const [what, ok] of checks) console.log((ok ? '  OK   ' : '  FAIL ') + what);
@@ -436,7 +461,7 @@ const cmds = {
 
       try {
         const payload = Buffer.from(`${room}|${exactNonce}|${rec.text}`, 'utf8');
-        if (edVerify(null, payload, publicKeyFromDid(rec.from), Buffer.from(rec.sig, 'base64url'))) ok++;
+        if (edVerify(null, payload, publicKeyFromDid(rec.from), sigBytes(rec.sig))) ok++;
         else { bad++; if (failures.length < 5) failures.push(rec); }
       } catch (e) { bad++; if (failures.length < 5) failures.push({ ...rec, _err: e.message }); }
     }
