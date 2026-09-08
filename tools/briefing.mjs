@@ -68,7 +68,8 @@ const drift    = on('DRIFT_CHANGED');
 const project  = on('DRIFT_PROJECT');
 const releases = on('RELEASES_NEWS');
 const tclk     = on('TCLK_REPLIED');
-const quiet    = !drift && !releases && !tclk && !bigMove;
+const guideOff = on('GUIDE_DRIFTED');
+const quiet    = !drift && !releases && !tclk && !bigMove && !guideOff;
 
 // The headline is what a push notification would carry, so it names the most consequential
 // thing first: the project site, then a shipped version, then a reply, then the numbers.
@@ -77,6 +78,7 @@ const headline =
 : releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
 : drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
 : tclk     ? 'tclk에 남긴 글에 답글이 달렸습니다'
+: guideOff ? '한국어 가이드가 서버와 어긋납니다 — 공개 문서가 틀린 값을 싣고 있습니다'
 : bigMove  ? `노트 수가 하루 만에 ${num(Math.abs(move))}개 ${move < 0 ? '줄었습니다' : '늘었습니다'}`
 :            '새 소식 없음 — 감시는 정상 동작했습니다';
 
@@ -146,7 +148,8 @@ if (quiet) {
     '- technocore.chat 프로토콜 문서 7종 — 변화 없음',
     '- flop.finance 페이지 4종 — 변화 없음',
     '- flop-labs 조직의 새 릴리스·새 저장소 — 없음',
-    '- tclk에 남긴 글의 답글 — 없음', '',
+    '- tclk에 남긴 글의 답글 — 없음',
+    '- 한국어 가이드의 수치·동작 주장 — 서버와 일치', '',
     '감시가 멈춘 것이 아니라, 실제로 조용한 하루였습니다.', '');
 }
 

@@ -56,6 +56,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-releases.mjs
 
+      # The guide claims specific numbers and behaviours. Hold it to the running
+      # service rather than to a copy of itself: four figures in the table that tells
+      # readers to trust the server had gone stale, and all four were found by hand.
+      # continue-on-error because a drifted document is a report, not a broken run —
+      # the census still has to commit.
+      - name: Check the Korean guide against the service
+        id: guide
+        continue-on-error: true
+        run: node tools/verify-guide.mjs
+
       # Replies to comments this repository left on flop-labs/tclk. Tracked here
       # rather than by notification because a reply is easy to miss in a repo
       # moving this fast, and because the state file makes it announce once.
@@ -78,6 +88,8 @@ jobs:
           RELEASES_SUMMARY: ${{ steps.releases.outputs.summary }}
           TCLK_REPLIED: ${{ steps.tclk.outputs.replied }}
           TCLK_SUMMARY: ${{ steps.tclk.outputs.summary }}
+          GUIDE_DRIFTED: ${{ steps.guide.outputs.drifted }}
+          GUIDE_SUMMARY: ${{ steps.guide.outputs.summary }}
         run: node tools/briefing.mjs
 
       - name: Commit what changed
@@ -119,6 +131,16 @@ jobs:
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --assignee "$GITHUB_REPOSITORY_OWNER" \
             --title "flop-labs 새 소식 — $HEADLINE" \
+            --body "$SUMMARY"
+
+      - name: Open an issue when the guide drifts
+        if: steps.guide.outputs.drifted == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.guide.outputs.summary }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --assignee "$GITHUB_REPOSITORY_OWNER" \
+            --title "한국어 가이드가 서버와 어긋납니다 — $(date -u +%Y-%m-%d)" \
             --body "$SUMMARY"
 
       - name: Open an issue when someone replies on tclk
