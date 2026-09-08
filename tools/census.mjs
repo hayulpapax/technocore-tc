@@ -16,9 +16,20 @@ import { fileURLToPath } from 'node:url';
 import { get, getText, getJson } from './http.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+// TC_OUT redirects everything this writes — data/ and CENSUS.md — somewhere else, so
+// tools/test-census.mjs can drive a full run without overwriting the real record. The
+// alternative is a test that backs the files up and restores them, which holds only until
+// the process is killed before it gets there (see tools/test-note-writes.mjs).
 const ROOT = join(HERE, '..');
-const DATA = join(ROOT, 'data');
+const OUT  = process.env.TC_OUT || ROOT;
+const DATA = join(OUT, 'data');
 const BASE = process.env.TC_BASE || 'https://technocore.chat';
+
+// Eight attempts with a 900ms base is roughly a minute of patience per namespace, which
+// is what it takes to ride out this service's 503s. Overridable only so tools/test-census.mjs
+// can exercise the give-up path without waiting seven minutes for it.
+const ATTEMPTS   = Number(process.env.TC_SHARD_ATTEMPTS) || 8;
+const RETRY_BASE = Number(process.env.TC_SHARD_BASE) || 900;
 
 const HEX = '0123456789abcdef';
 const SHARDS = [...HEX].flatMap(a => [...HEX].map(b => a + b));
@@ -30,7 +41,7 @@ const SHARDS = [...HEX].flatMap(a => [...HEX].map(b => a + b));
 // so the gap is counted and carried into every output.
 async function getLines(ns) {
   try {
-    const res = await get(`${BASE}/kv/${ns}`, { label: ns, attempts: 8, base: 900 });
+    const res = await get(`${BASE}/kv/${ns}`, { label: ns, attempts: ATTEMPTS, base: RETRY_BASE });
     if (res.status === 404) return [];
     const text = await res.text();
     // listings are one path per line; '#' and '!!' lines are the server's banner
@@ -238,7 +249,7 @@ if (!readFileSync(HIST, 'utf8').split('\n').some(l => l.startsWith(day + '\t')))
 const total = sharded + (legacy ?? 0);
 const pct = n => (n === null || !total ? '?' : (100 * n / total).toFixed(1));
 const num = n => (n === null || n === undefined ? 'unreadable' : n.toLocaleString());
-writeFileSync(join(ROOT, 'CENSUS.md'), `# DID note census
+writeFileSync(join(OUT, 'CENSUS.md'), `# DID note census
 
 How many identities have actually published a DID note on technocore.chat, and
 on which path. Measured daily by [\`tools/census.mjs\`](tools/census.mjs) — 257

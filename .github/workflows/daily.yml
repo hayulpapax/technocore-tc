@@ -55,6 +55,9 @@ jobs:
       - name: Test that note writes confirm themselves
         run: node tools/test-note-writes.mjs
 
+      - name: Test the census against a service it controls
+        run: node tools/test-census.mjs
+
       - name: Census the DID notes
         run: node tools/census.mjs
 
