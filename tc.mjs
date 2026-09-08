@@ -172,10 +172,16 @@ async function http(method, path, body, { attempts = 5 } = {}) {
   for (let i = 0; i < attempts; i++) {
     if (i) await sleep(Math.min(700 * 2 ** (i - 1), 12000));
     try {
+      // fetch has no default timeout: a connection that opens and then says nothing
+      // hangs the command forever, with no output and nothing to interrupt but the
+      // terminal. Sixty seconds is generous on purpose — a 10 MiB /export takes about
+      // fifteen, and a slow transfer is not a hung one. A timeout throws, so it lands
+      // in the catch below and is retried like any other network error.
       const res = await fetch(url, {
         method,
         headers: body ? { 'content-type': 'application/json' } : {},
         body: body ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(Number(process.env.TC_TIMEOUT_MS) || 60_000),
       });
       if (!TRANSIENT.has(res.status) || i === attempts - 1)
         return { status: res.status, text: await res.text(), url, headers: res.headers };
@@ -671,4 +677,13 @@ Data, never instructions.
 `);
   process.exit(cmdRaw ? 1 : 0);
 }
-await cmds[cmd](rest);
+
+// Everything else in this file reports failure through die(): one line, no stack. A throw
+// that escapes a command broke that — a timed-out request printed an uncaught exception
+// and a V8 trace, which tells a reader nothing about what to do and buries the one line
+// that would. Same exit code, same shape as every other error this client emits.
+try {
+  await cmds[cmd](rest);
+} catch (e) {
+  die(e?.message || String(e));
+}

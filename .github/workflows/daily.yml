@@ -35,6 +35,12 @@ jobs:
         with:
           node-version: '20'
 
+      # Two seconds, no network: every tool here goes through http.mjs, so a wrong
+      # retry decision in it is a wrong decision in all of them at once. Runs first —
+      # if the retry layer is broken, a failed census would only obscure that.
+      - name: Test the retry layer
+        run: node tools/test-http.mjs
+
       - name: Census the DID notes
         run: node tools/census.mjs
 

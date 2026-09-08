@@ -16,12 +16,24 @@ const RETRY_STATUS = new Set([
 ]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-export async function get(url, { attempts = 6, base = 700, label = url, headers } = {}) {
+// fetch has no default timeout, so a connection that opens and then says nothing hangs
+// until the job's own limit — six hours on a GitHub runner, for a census that takes two
+// minutes. Verified against a server that accepts and never answers: without this the
+// call never returns. Generous rather than tight, because /export is megabytes and a slow
+// transfer is not a hung one; a timeout lands in the catch below and is retried like any
+// other network error.
+const TIMEOUT_MS = Number(process.env.TC_HTTP_TIMEOUT_MS) || 60_000;
+
+export async function get(url, { attempts = 6, base = 700, label = url, headers,
+                                 timeout = TIMEOUT_MS } = {}) {
   let last = null;
   for (let i = 0; i < attempts; i++) {
     if (i) await sleep(Math.min(base * 2 ** (i - 1), 15000));
     try {
-      const res = await fetch(url, headers ? { headers } : undefined);
+      const res = await fetch(url, {
+        ...(headers ? { headers } : {}),
+        signal: AbortSignal.timeout(timeout),
+      });
       if (res.ok || res.status === 404) return res;
       last = new Error(`${label}: HTTP ${res.status}`);
       if (!RETRY_STATUS.has(res.status)) throw last;
@@ -39,4 +51,15 @@ export async function get(url, { attempts = 6, base = 700, label = url, headers 
 }
 
 export const getText = async (url, o) => (await get(url, o)).text();
-export const getJson = async (url, o) => (await get(url, o)).json();
+
+// `get` returns a 404 rather than throwing, so callers can tell absent from broken. That
+// leaves getJson parsing a body that is not JSON, and the caller sees
+// `SyntaxError: Unexpected token 'o', "no such room" is not valid JSON` — an error about
+// the wrong thing entirely. technocore answers a missing room with an empty 200 rather
+// than a 404, so this is a sharp edge rather than a live crash, but the next caller to
+// ask for JSON at a path that can be absent deserves to be told which it was.
+export const getJson = async (url, o) => {
+  const res = await get(url, o);
+  if (res.status === 404) throw new Error(`${o?.label ?? url}: 404 — no JSON to parse`);
+  return res.json();
+};
