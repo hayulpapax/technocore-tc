@@ -545,6 +545,13 @@ const cmds = {
   async say(args) {
     const room = need(args[0], 'room');
     const text = sweep(need(args[1], 'text'));
+    // The sweep can empty a message that looked like content: a zero-width space, a lone
+    // surrogate, or nothing but whitespace all reduce to "". Signing and sending that
+    // spends a write from the rate-limit bucket and burns a nonce to post nothing, and
+    // the caller gets a server error instead of being told what happened to their text.
+    // Same rule as the local signature check below — do not let it become a request.
+    if (text === '') die('the sweep left this message empty — nothing to send\n' +
+                        '(zero-width or control characters only? see GUIDE.ko.md §2-1)');
     if ([...text].length > 4096) die('text exceeds 4096 chars');
     const nonce   = nextNonce();
     const payload = `${room}|${nonce}|${text}`;
@@ -565,6 +572,7 @@ const cmds = {
   async kvset(args) {
     const ns = need(args[0], 'ns'), key = need(args[1], 'key');
     const value = sweep(need(args[2], 'value'));
+    if (value === '') die('the sweep left this value empty — nothing to write');
     if ([...value].length > 8192) die('value exceeds 8192 chars');
     if (args.includes('--dry-run')) {
       console.log(`POST /kv/${ns}/${key}`);

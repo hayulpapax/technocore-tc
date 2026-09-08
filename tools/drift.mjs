@@ -55,9 +55,21 @@ const lineHash = s => sha(s).slice(0, 12);
 // shuffled lines. Fingerprinted raw, all three HTML pages would report a change
 // every single day and the watcher would cry wolf until it was ignored. Drop the
 // injected lines; nothing being watched for lives in a font CDN block.
+//
+// Match the injection, not the subject. Cloudflare's additions are always inside a tag
+// — a <style> block of @font-face rules, or a <script> touching __cf* — so requiring the
+// line to open with one keeps authored prose in the fingerprint. Without that, this
+// filter was dropping a line flop.finance wrote itself:
+//
+//   /cf-fonts/, so the delivered page never contacts fonts.googleapis.com — but
+//
+// a sentence of the page's own comment explaining the very same mechanism. The watcher
+// could never have reported a change to it, and would have said nothing while looking
+// straight at one.
+const injected = l => /^\s*</.test(l) && (l.includes('/cf-fonts/') || l.includes('__cf'));
 const normalize = text => text
   .split('\n')
-  .filter(l => !l.includes('/cf-fonts/') && !l.includes('__cf'))
+  .filter(l => !injected(l))
   .join('\n');
 
 async function fingerprint(url) {

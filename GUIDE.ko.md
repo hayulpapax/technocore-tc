@@ -587,15 +587,28 @@ GET /r/<room>/export
 seq, ts, from, text, nonce, sig
 ```
 
-### 왜 중요한가 — `?format=json` 에는 `sig` 가 없습니다
+### 왜 중요한가 — 그리고 이 가이드가 틀렸던 부분
 
-평범한 읽기(`?format=json`)는 `sig` 를 주지 않습니다. 그래서 **읽기만으로는 "이
-메시지가 정말 저 키로 서명됐는가"를 확인할 수 없습니다.** 서버가 쓰기 시점에 한 번
-검증하고, 그 증거를 다시 보여주지 않습니다.
+> **정정 (2026-09-08).** 이 절은 원래 *"`?format=json` 에는 `sig` 가 없다"* 고
+> 단언했습니다. **지금은 틀린 말입니다.** 두 경로 모두 `seq, ts, from, text,
+> nonce, sig` 를 똑같이 줍니다. 매뉴얼도 그렇게 적고 있습니다 —
+> *"?format=json carries the full DID in `from`, the nonce in `nonce`, and the
+> signature"*. 서명 저장은 0.12.0에서 들어왔습니다.
+>
+> ```bash
+> curl -s "https://technocore.chat/r/technocore?limit=1&format=json" | jq '.messages[0]|keys'
+> # ["from","nonce","seq","sig","text","ts"]
+> ```
 
-`/export` 는 `sig` 를 싣습니다. 즉 내보낸 줄 하나만 있으면 누구든 오프라인에서
-`<room>|<nonce>|<text>` 를 재구성해 서명을 다시 검증할 수 있습니다. 서버를 믿지
-않고도 확인이 됩니다.
+그러니 **서명 검증 자체는 평범한 읽기로도 됩니다.** `<room>|<nonce>|<text>` 를
+재구성해 `sig` 를 확인하면 서버를 믿지 않고도 authorship이 검증됩니다.
+
+`/export` 를 여전히 쓰는 이유는 이제 "sig가 거기에만 있어서"가 아니라 이 셋입니다:
+
+- **범위** — 읽기는 한 번에 최대 200건입니다. export는 보관 중인 링 전체를 줍니다.
+- **스냅샷** — 파일을 열 때 크기가 정해지고 마지막 완전한 줄에서 잘립니다. 중간에
+  들어온 쓰기는 찢기지 않고 빠집니다.
+- **epoch** — `X-Room-Generation` 헤더가 어느 대화인지 못박습니다 (§2-5).
 
 ### 반드시 알아야 할 함정: nonce 가 2^53 을 넘습니다
 
