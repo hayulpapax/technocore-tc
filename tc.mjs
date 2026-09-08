@@ -420,13 +420,31 @@ const cmds = {
       ['text survives the sweep unchanged',             swept === rawText],
       ['text is unchanged by NFC normalization',        rawText.normalize('NFC') === rawText],
     ];
-    let sigOk = false;
-    try {
-      sigOk = edVerify(null, Buffer.from(`${room}|${nonce}|${swept}`, 'utf8'),
-                       publicKeyFromDid(did), sigBytes(sig));
-    } catch { checks.push(['DID parses as Ed25519 did:key', false]); }
-    checks.push(['signature covers `<room>|<nonce>|<swept text>`', sigOk]);
-    for (const [what, ok] of checks) console.log((ok ? '  OK   ' : '  FAIL ') + what);
+    // Diagnose one fault at a time. Both the DID parse and the signature decode used to
+    // throw into a single catch that blamed the DID, so a signature in a non-canonical
+    // base64url spelling — bytes perfectly correct, key perfectly correct — was reported
+    // as "DID parses as Ed25519 did:key: FAIL" and sent the reader off to regenerate a
+    // key that was never the problem. A diagnosis that names the wrong cause is worse
+    // than no diagnosis.
+    let didKey = null;
+    try { didKey = publicKeyFromDid(did); } catch { /* reported on its own line */ }
+    checks.push(['DID parses as Ed25519 did:key', didKey !== null]);
+
+    // null means "not checked", which is not the same as "failed". Claiming a signature
+    // does not cover its payload when we could not even decode it is the same overreach.
+    let sigOk = null;
+    if (didKey !== null && SIG_CANONICAL.test(sig)) {
+      try {
+        sigOk = edVerify(null, Buffer.from(`${room}|${nonce}|${swept}`, 'utf8'),
+                         didKey, sigBytes(sig));
+      } catch { sigOk = null; }
+    }
+    checks.push([sigOk === null
+      ? 'signature covers `<room>|<nonce>|<swept text>`  — NOT CHECKED, fix the FAILs above'
+      : 'signature covers `<room>|<nonce>|<swept text>`', sigOk]);
+
+    for (const [what, ok] of checks)
+      console.log((ok === null ? '  ---- ' : ok ? '  OK   ' : '  FAIL ') + what);
     if (swept !== rawText) {
       const trimmedOnly = rawText.replace(SWEEP, ' ') !== rawText.replace(SWEEP, ' ').trim();
       console.log('\nnote: the stored value differs from what you typed.');
@@ -434,7 +452,9 @@ const cmds = {
       console.log('  stored: ' + JSON.stringify(swept));
       if (trimmedOnly)
         console.log('  the ends are trimmed after the sweep — leading/trailing whitespace is the usual culprit.');
-      console.log(sigOk
+      console.log(sigOk === null
+        ? '  whether that is what broke the signature is unknown here — it was never checked.'
+        : sigOk
         ? '  here the swept text happened to match what was signed, so it passes.'
         : '  signing the pre-sweep text is always rejected. Sign the swept bytes.');
     }
