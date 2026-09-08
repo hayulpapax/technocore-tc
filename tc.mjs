@@ -16,7 +16,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const HERE    = dirname(fileURLToPath(import.meta.url));
-const KEYDIR  = join(HERE, 'keys');
+// TC_KEYDIR keeps the identity somewhere other than beside the script — a different
+// disk, a removable volume, or a throwaway directory. tools/test-note-writes.mjs uses
+// it so the tests never touch the real keys: an earlier version backed up keys/note.json
+// and restored it in a `finally`, which is fine until the process is killed. Piping the
+// run into `head` was enough — SIGPIPE, no finally, and the real note record was left
+// holding a test value.
+const KEYDIR  = process.env.TC_KEYDIR || join(HERE, 'keys');
 const KEYFILE = join(KEYDIR, 'identity.json');
 const NONCEF  = join(KEYDIR, 'nonce.json');
 const NOTEF   = join(KEYDIR, 'note.json');
@@ -220,6 +226,39 @@ function show(r) {
 const bodyOf = text => text.split('\n')
   .filter(l => l.trim() && !l.startsWith('#') && !l.startsWith('!!'))
   .join(' ').trim();
+
+/* Write a note and then go and look.
+
+   A 200 on the write is not evidence the value is there, and every note write in this
+   file used to stop at that 200: publish-note recorded the note locally as published,
+   refresh reported OK for an identity that had just vanished, kv-set printed the write
+   response and said nothing further. Each was the same mistake — reporting a result
+   nobody had checked.
+
+   Read a few times before believing a bad answer. /rooms on this service comes back with
+   two different room counts and two different caps depending on which instance replies,
+   so one read arriving before an instance has caught up is an expected event rather than
+   evidence of loss. One confirming read settles it, and the count is returned so a caller
+   can say a run needed three. */
+async function writeNoteConfirmed(path, value, { reads = 3, pause = 1500 } = {}) {
+  const r = await http('POST', path, { value });
+  if (r.status !== 200) return { ok: false, status: r.status, why: `the write returned HTTP ${r.status}` };
+
+  let sawOther = null, attempts = 0;
+  for (; attempts < reads; attempts++) {
+    if (attempts) await sleep(pause);
+    const back = await http('GET', path);
+    const stored = back.status === 200 ? bodyOf(back.text) : null;
+    if (stored === value) return { ok: true, status: 200, attempts: attempts + 1 };
+    if (stored !== null) sawOther = stored;
+  }
+  return {
+    ok: false, status: 200, attempts, sawOther,
+    why: sawOther === null
+      ? `the write returned 200 but ${attempts} reads found nothing there`
+      : `the write returned 200 but ${attempts} reads found a different value`,
+  };
+}
 
 /* ---------- commands ---------- */
 const cmds = {
@@ -629,7 +668,14 @@ const cmds = {
       console.log('\n(--dry-run: nothing sent)');
       return;
     }
-    show(await http('POST', `/kv/${ns}/${key}`, { value }));
+    const w = await writeNoteConfirmed(`/kv/${ns}/${key}`, value);
+    console.log(w.ok
+      ? `OK  written and read back${w.attempts > 1 ? ` (confirmed on read ${w.attempts})` : ''}`
+      : `FAILED — ${w.why}.`);
+    if (!w.ok) {
+      if (w.sawOther) console.log('  found instead: ' + w.sawOther.slice(0, 160));
+      process.exitCode = 1;
+    }
   },
 
   // DID note (patterns.md #3) — world-writable namespace, plain write
@@ -644,12 +690,22 @@ const cmds = {
       console.log('\n(--dry-run: nothing sent)');
       return;
     }
-    const r = await http('POST', `/kv/did-${shard}/${key}`, { value });
-    if (r.status === 200) {
-      mkdirSync(KEYDIR, { recursive: true });
-      writeFileSync(NOTEF, JSON.stringify({ value }, null, 2));
+    const w = await writeNoteConfirmed(`/kv/did-${shard}/${key}`, value);
+    if (!w.ok) {
+      console.log(`FAILED — ${w.why}.`);
+      if (w.sawOther) console.log('  found instead: ' + w.sawOther.slice(0, 160));
+      console.log('  The note is NOT published. keys/note.json is left unchanged so that');
+      console.log('  refresh does not start defending a note that was never there.');
+      process.exitCode = 1;
+      return;
     }
-    show(r);
+    // Only now is it true that this is the published note. Recording it on the strength
+    // of the write alone made keys/note.json a claim rather than a record.
+    mkdirSync(KEYDIR, { recursive: true });
+    writeFileSync(NOTEF, JSON.stringify({ value }, null, 2));
+    console.log(`OK  published and read back${w.attempts > 1 ? ` (confirmed on read ${w.attempts})` : ''}`);
+    console.log(`  /kv/did-${shard}/${key}`);
+    console.log('  ' + value);
   },
 
   // Re-write the DID note.
@@ -672,39 +728,13 @@ const cmds = {
     else if (live !== value)    console.log(`${stamp}  note was OVERWRITTEN by someone else — restoring\n  found: ${live.slice(0, 160)}`);
     else                        console.log(`${stamp}  note intact — rewriting to reset the 7-day idle timer`);
 
-    const r = await http('POST', `/kv/did-${shard}/${key}`, { value });
-    if (r.status !== 200) {
-      console.log(`${stamp}  FAILED HTTP ${r.status}`);
-      process.exitCode = 1;
-      return;
-    }
-
-    // A 200 on the write is not evidence the note is there. This command's whole job is
-    // that the identity does not quietly vanish, so it has to go and look — reporting OK
-    // for a write that did not land is the exact failure it exists to prevent.
-    //
-    // Read a few times before believing a bad answer. /rooms on this service returns two
-    // different room counts and two different caps depending on which instance replies
-    // (tools/census.mjs), so a single read landing on an instance that has not caught up
-    // is an expected event, not evidence of loss. One confirming read is enough; the
-    // count is printed so a run that needed three says so.
-    let confirmed = false, attempts = 0, sawOther = null;
-    for (; attempts < 3 && !confirmed; attempts++) {
-      if (attempts) await sleep(1500);
-      const back = await http('GET', `/kv/did-${shard}/${key}`);
-      const stored = back.status === 200 ? bodyOf(back.text) : null;
-      if (stored === value) confirmed = true;
-      else if (stored !== null) sawOther = stored;
-    }
-
-    if (confirmed) {
-      console.log(`${stamp}  OK  written and read back${attempts > 1 ? ` (confirmed on read ${attempts})` : ''}`);
+    const w = await writeNoteConfirmed(`/kv/did-${shard}/${key}`, value);
+    if (w.ok) {
+      console.log(`${stamp}  OK  written and read back${w.attempts > 1 ? ` (confirmed on read ${w.attempts})` : ''}`);
       console.log(`${stamp}  ${value}`);
     } else {
-      console.log(`${stamp}  FAILED — the write returned 200 but the note does not read back.`);
-      console.log(sawOther === null
-        ? `  ${attempts} reads found nothing at /kv/did-${shard}/${key}.`
-        : `  ${attempts} reads found a different value:\n    ${sawOther.slice(0, 160)}`);
+      console.log(`${stamp}  FAILED — ${w.why}.`);
+      if (w.sawOther) console.log('  found instead: ' + w.sawOther.slice(0, 160));
       console.log('  The identity is NOT refreshed. Do not treat this run as done.');
       process.exitCode = 1;
     }
