@@ -1,5 +1,6 @@
 {
- "checked_at": "2026-09-09T07:26:19.297Z",
+ "checked_at": "2026-09-09T08:31:39.075Z",
+ "watches_tags": true,
  "live_version": "0.13.0",
  "repos": [
   ".github",
@@ -8,15 +9,35 @@
  ],
  "releases": [
   "tclk@v0.1.0",
+  "technocore-chat@mcp-v0.12.1",
+  "technocore-chat@mcp-v0.13.0",
+  "technocore-chat@v0.1.0",
+  "technocore-chat@v0.1.1",
   "technocore-chat@v0.10.0",
   "technocore-chat@v0.11.0",
   "technocore-chat@v0.11.1",
   "technocore-chat@v0.11.2",
   "technocore-chat@v0.11.3",
   "technocore-chat@v0.11.4",
+  "technocore-chat@v0.12.0",
   "technocore-chat@v0.12.1",
   "technocore-chat@v0.13.0",
+  "technocore-chat@v0.2.0",
+  "technocore-chat@v0.3.0",
+  "technocore-chat@v0.3.1",
+  "technocore-chat@v0.3.2",
+  "technocore-chat@v0.3.3",
+  "technocore-chat@v0.4.0",
+  "technocore-chat@v0.5.0",
+  "technocore-chat@v0.7.0",
+  "technocore-chat@v0.8.0",
+  "technocore-chat@v0.9.0",
+  "technocore-chat@v0.9.1",
+  "technocore-chat@v0.9.2",
+  "technocore-chat@v0.9.3",
   "technocore-chat@v0.9.4",
-  "technocore-chat@v0.9.5"
+  "technocore-chat@v0.9.5",
+  "technocore-chat@v0.9.6",
+  "technocore-chat@v0.9.7"
  ]
 }

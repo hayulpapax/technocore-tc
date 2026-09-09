@@ -1,14 +1,26 @@
 {
- "checked_at": "2026-09-09T07:26:24.045Z",
+ "checked_at": "2026-09-09T08:31:43.156Z",
  "threads": {
-  "93": {
+  "flop-labs/tclk#93": {
    "title": "`foldTranscript` trusts the export's row order and never checks for a gap — deleting one signed row folds a claimed deal to `refunded`, with no `BAD` verdict",
    "url": "https://github.com/flop-labs/tclk/issues/93",
    "state": "open",
    "our_last_comment": "2026-09-05T00:40:30Z",
    "watermark": "2026-09-05T00:58:09Z",
    "replies_since_we_joined": 4,
-   "last_reply_at": "2026-09-05T00:58:09Z"
+   "last_reply_at": "2026-09-05T00:58:09Z",
+   "carried_forward": true
+  },
+  "flop-labs/tclk#78": {
+   "repo": "flop-labs/tclk",
+   "title": "A venue nonce above 2^53 is a valid record the read path cannot fold — 40% of the live `tclk-offers` export, and one row refuses the whole file",
+   "url": "https://github.com/flop-labs/tclk/issues/78",
+   "state": "open",
+   "our_last_comment": "2026-09-09T07:58:44Z",
+   "we_authored": false,
+   "watermark": "2026-09-09T07:58:44Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": "2026-09-04T01:57:20Z"
   }
  }
 }
