@@ -21,7 +21,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(HERE, '..');
+// TC_OUT points the history it reads and the page it writes at another directory, so
+// tools/test-briefing.mjs can drive it without touching the real record — the same
+// affordance census.mjs takes, for the same reason.
+const ROOT = process.env.TC_OUT || join(HERE, '..');
 
 const rows = readFileSync(join(ROOT, 'data', 'census-history.tsv'), 'utf8')
   .trim().split('\n').slice(1).map(l => {
@@ -89,17 +92,37 @@ const headline =
 const ageHours = (Date.now() - new Date(last.at).getTime()) / 3_600_000;
 const stale = !(ageHours < 30);           // NaN-safe: an unparseable stamp counts as stale
 
+// Two different things, and conflating them is what went wrong.
+//
+// "stale" means the watch may have stopped. "not today's" means it is working perfectly
+// and simply has not run yet — the history takes one row per day, written by that day's
+// first census, so every reader between then and tomorrow's run sees identical numbers.
+//
+// Only the first of those is rare. The second happens every single morning, and on
+// 2026-09-09 the daily briefing read this page at 09:58 KST and reported a measurement
+// taken at 10:00 KST the previous day as "실제 변화가 있어" — news a day old, delivered
+// as news. The timestamp was in the page; nothing said what it meant. So the marker goes
+// in the headline itself, because the headline is the line a reader quotes.
+const todayUTC = new Date().toISOString().slice(0, 10);
+const isToday = last.date === todayUTC;
+
 const out = [
-  `# FLOP 일일 브리핑 — ${last.date}`,
+  `# FLOP 일일 브리핑 — ${last.date}${isToday ? '' : '  (오늘 조사 전)'}`,
   '',
+  ...(isToday ? [] : [
+    `> ℹ️ **이 수치는 ${last.date} 조사분입니다. 오늘(${todayUTC}) 조사는 아직 돌지 않았습니다.**`,
+    '> 아래 내용은 어제 이미 보고된 것과 같습니다 — **새 소식이 아닙니다.**',
+    '> 정기 조사는 매일 02:15 UTC(11:15 KST)이고, GitHub 대기열 때문에 몇 시간 늦게 돌기도 합니다.',
+    '',
+  ]),
   ...(stale ? [
     `> ⚠️ **이 브리핑은 오래됐습니다.** 가장 최근 조사가 ` +
     `${Number.isFinite(ageHours) ? Math.round(ageHours) + '시간 전' : '언제인지 불명'}입니다. ` +
     `감시가 멈췄을 수 있으니, 아래 내용을 오늘 소식으로 보고하지 마십시오.`, '',
   ] : []),
-  `**${headline}**`,
+  `**${isToday ? headline : `[${last.date} 조사분 · 새 소식 아님] ${headline}`}**`,
   '',
-  `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC)`,
+  `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC) — ${Number.isFinite(ageHours) ? `${Math.round(ageHours)}시간 전` : '시각 불명'}`,
   `- 서비스 버전: \`${last.version}\`${prev && prev.version !== last.version ? ` — 어제 \`${prev.version}\` 에서 올라감` : ''}`,
   `- 조사 횟수: ${rows.length}회 (${rows[0].date}부터)`,
   '',

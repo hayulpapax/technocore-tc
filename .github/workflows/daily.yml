@@ -58,6 +58,9 @@ jobs:
       - name: Test the census against a service it controls
         run: node tools/test-census.mjs
 
+      - name: Test that the briefing dates itself
+        run: node tools/test-briefing.mjs
+
       - name: Census the DID notes
         run: node tools/census.mjs
 
