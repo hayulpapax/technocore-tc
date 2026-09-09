@@ -16,7 +16,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const TSV = new URL('../data/census-history.tsv', import.meta.url);
 const rows = readFileSync(TSV, 'utf8').trim().split('\n').slice(1).map(l => {
   const f = l.split('\t');
-  return { date: f[0], sharded: +f[3], legacy: +f[4], cap: +f[5], atCap: f[6] === 'true' };
+  // The census writes an empty legacy cell when that namespace would not serve the read.
+  // `+''` is 0, and 0 drawn on the bottom panel is a namespace that emptied overnight —
+  // the one event this chart exists to show, invented by a 503. Keep it null and leave a
+  // gap in the line instead.
+  return { date: f[0], sharded: +f[3], legacy: f[4] === '' ? null : +f[4],
+           cap: +f[5], atCap: f[6] === 'true' };
 });
 if (rows.length < 2) throw new Error(`need at least two censuses to draw a line, have ${rows.length}`);
 
@@ -80,8 +85,17 @@ const ticksFor = max => {
 };
 const fmtTick = v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v ? `${Math.round(v / 1000)}k` : '0';
 
-const line = (key, Y) => rows
-  .map((r, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(r[key]).toFixed(1)}`).join(' ');
+// A null value breaks the path: the next real point starts a new sub-path, so a day the
+// census could not read draws as a gap rather than a plunge to zero.
+const line = (key, Y) => {
+  let pen = false, d = '';
+  rows.forEach((r, i) => {
+    if (r[key] === null || r[key] === undefined) { pen = false; return; }
+    d += `${pen ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(r[key]).toFixed(1)} `;
+    pen = true;
+  });
+  return d.trim();
+};
 const gridFor = (ticks, Y) => ticks.map(v => `
     <line x1="${L}" y1="${Y(v).toFixed(1)}" x2="${W - R}" y2="${Y(v).toFixed(1)}" stroke="#232A3E" stroke-width="1"/>
     <text x="${L - 16}" y="${(Y(v) + 6).toFixed(1)}" text-anchor="end" font-family="Space Mono, monospace"
@@ -94,7 +108,7 @@ const shardedLine = line('sharded', aY);
 
 // bottom panel — legacy against a stepped cap
 const bTop = 560, bH = 210;
-const bMax = niceMax(Math.max(...rows.map(r => Math.max(r.legacy, r.cap))));
+const bMax = niceMax(Math.max(...rows.map(r => Math.max(r.legacy ?? 0, r.cap))));
 const bY = v => bTop + bH - (bH * v) / bMax;
 const legacyLine = line('legacy', bY);
 
@@ -108,7 +122,7 @@ rows.forEach((r, i) => {
   capPath += ` L${X(i).toFixed(1)} ${bY(r.cap).toFixed(1)}`;
 });
 
-const hits = rows.map((r, i) => r.atCap ? `
+const hits = rows.map((r, i) => r.atCap && r.legacy !== null ? `
   <circle cx="${X(i).toFixed(1)}" cy="${bY(r.legacy).toFixed(1)}" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>` : '').join('');
 
 // label about eight dates, always including the last, and never twice in the same spot
@@ -151,7 +165,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" wid
     <circle cx="${L + 8}" cy="${H - 48}" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
     <text x="${L + 28}" y="${H - 42}" fill="#9AA4B2">${capNote}</text>
     <text x="${W - R}" y="${H - 42}" text-anchor="end" fill="#5C6670">
-      257 reads per census &#183; method and data: hayulpapax/technocore-tc</text>
+      257 namespace listings per census &#183; method and data: hayulpapax/technocore-tc</text>
   </g>
 </svg>`;
 

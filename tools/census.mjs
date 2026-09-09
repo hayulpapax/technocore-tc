@@ -248,7 +248,11 @@ if (!readFileSync(HIST, 'utf8').split('\n').some(l => l.startsWith(day + '\t')))
 
 const total = sharded + (legacy ?? 0);
 const pct = n => (n === null || !total ? '?' : (100 * n / total).toFixed(1));
+// Two ways a figure can be missing, and they used to print under one word. A namespace
+// the service would not serve is unreadable; a cap agent.json does not publish is
+// unknown. "cap unreadable" sends a reader to retry a request that was never made.
 const num = n => (n === null || n === undefined ? 'unreadable' : n.toLocaleString());
+const capNum = n => (n === null || n === undefined ? 'not published' : n.toLocaleString());
 writeFileSync(join(OUT, 'CENSUS.md'), `# DID note census
 
 How many identities have actually published a DID note on technocore.chat, and
@@ -266,7 +270,7 @@ ${failed.length || legacy === null ? `
 |---|---|
 | current sharded path \`/kv/did-<2>/<14>\` | **${num(sharded)}** (${pct(sharded)}%) |
 | legacy path \`/kv/did/<16>\` | **${num(legacy)}** (${pct(legacy)}%) |
-| per-namespace cap (server-published) | ${num(NS_CAP)} |
+| per-namespace cap (server-published) | ${capNum(NS_CAP)} |
 | legacy headroom | ${num(snapshot.legacy_headroom)} |
 | shards holding at least one note | ${nonEmpty} of ${ok.length} read${failed.length ? ` · **${failed.length} unreadable**` : ''} |
 | notes per shard | min ${sorted[0]}, median ${median}, max ${sorted[sorted.length - 1]} |
@@ -282,7 +286,7 @@ from that file, so it cannot fall out of step with the numbers on this page.
 
 \`/.well-known/agent.json\` publishes the per-namespace note cap, and the legacy
 namespace currently holds **${num(legacy)}** against a cap of
-**${num(NS_CAP)}**${
+**${capNum(NS_CAP)}**${
   snapshot.legacy_at_cap
     ? ' — it is at the cap.'
     : `, leaving ${num(snapshot.legacy_headroom)} of headroom.`}
@@ -298,7 +302,7 @@ legacy path will report a correctly-published identity as missing. That is what
 [\`tc.mjs check-note\`](README.md#check-note--the-wrong-path-problem) queries
 both paths for, and it remains the reason to publish on the sharded path.
 
-## The note store is full
+## ${snapshot.notes_at_cap ? 'The note store is full' : 'The global note store'}
 
 \`/rooms\` reports the global note total: **${num(notesNow)} of ${num(notesCap)}**${
   snapshot.notes_at_cap ? ' — at the cap.' : '.'}

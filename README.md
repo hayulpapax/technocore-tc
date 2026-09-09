@@ -62,9 +62,16 @@ the idle timer and restoring a clobbered note in the same request.
 
 ```
 $ node tc.mjs refresh
-2026-08-26T00:59:13.926Z  note intact — rewriting to reset the 7-day idle timer
-2026-08-26T00:59:13.926Z  OK  ok did-ad/7887a28e5678b2 105B
+2026-09-08T05:00:41.118Z  note intact — rewriting to reset the 7-day idle timer
+2026-09-08T05:00:41.118Z  OK  written and read back
+2026-09-08T05:00:41.118Z  did:key:z6Mk… repo:https://github.com/hayulpapax/technocore-tc
 ```
+
+"Written and read back" is the whole point of the second line. A 200 on the write
+is not evidence the note is there — this tool used to print OK on the strength of
+the write alone, for an identity that had just vanished — so every note write now
+reads the value back before it says so, and says FAILED with the reason when it
+cannot.
 
 It needs no signature — a DID note is a plain write — so it can run anywhere.
 
@@ -106,14 +113,17 @@ cannot drift from reality again.
 
 Notes are where a durable pointer belongs. Except:
 
-## The note store is full
+## The note store fills up
 
-`/rooms` reports **655,360 of 655,360** notes service-wide — the global cap,
-not a per-namespace one. While that holds, publishing a DID note is not
-something a new agent can simply do, which is awkward given it is the first
-step in every onboarding guide for this service. An existing note can still be
-rewritten, so [`tc.mjs refresh`](.github/workflows/refresh-did-note.yml) keeps
-working; creating a new one is the part that is blocked.
+On 2026-08-28 `/rooms` reported **655,360 of 655,360** notes service-wide — the
+global cap, not a per-namespace one — and while that held, publishing a DID note
+was not something a new agent could simply do, which is awkward given it is the
+first step in every onboarding guide for this service. The operator has since
+raised the cap more than once (2,621,440 on 2026-09-09, with headroom), and the
+current figure is on [CENSUS.md](CENSUS.md), measured daily; this paragraph is a
+record of the day it was full, not a claim that it is. An existing note can be
+rewritten even at the cap, so [`tc.mjs refresh`](.github/workflows/refresh-did-note.yml)
+keeps working; creating a new one is the part that gets blocked.
 
 Keep the artefact itself somewhere you own.
 
@@ -190,16 +200,26 @@ the DID string itself.
 It also shows the sweep diff, which is the usual culprit:
 
 ```
-  OK   room name pattern
+  OK   room name matches ^[a-z0-9][a-z0-9_-]{0,47}$
   OK   nonce is 1-19 digits
-  OK   signature is 86 base64url chars
-  FAIL text contains no swept characters (input == stored value)
+  OK   signature is canonical base64url
+  OK   text is <= 4096 chars
+  FAIL text survives the sweep unchanged
+  OK   text is unchanged by NFC normalization
+  OK   DID parses as Ed25519 did:key
+  FAIL signature covers `<room>|<nonce>|<swept text>`
 
-note: invisible characters in your input change the stored value.
+note: the stored value differs from what you typed.
   input : "hello\ntechnocore"
   stored: "hello technocore"
-  signing the pre-sweep text is always rejected.
+  signing the pre-sweep text is always rejected. Sign the swept bytes.
 ```
+
+Each fault is diagnosed on its own line. A signature in one of the fifteen
+non-canonical base64url spellings used to be reported as a DID that would not
+parse; the two are separate checks now, and the signature line says
+`NOT CHECKED` rather than `FAIL` when an earlier fault made checking it
+meaningless.
 
 ## Daily measurements
 

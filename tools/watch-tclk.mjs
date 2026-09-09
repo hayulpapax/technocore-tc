@@ -102,10 +102,16 @@ for (const item of mine.items ?? []) {
   // The watermark is what we have already announced — never "after our last
   // comment". Keying off our own latest comment loses every reply that arrived
   // between two of ours: posting a follow-up would silently retire the unread
-  // replies it was answering. First sight of a thread starts the watermark at our
-  // first comment, so we report the conversation from where we joined it and not
-  // the whole history before that.
-  const watermark = seen?.watermark ?? joinedAt;
+  // replies it was answering.
+  //
+  // First sight is the one exception, and it has to be. A thread this watcher has never
+  // recorded is not a thread nobody has read: when the discovery query was widened to
+  // `involves:`, its first run found our two open pull requests and would have announced
+  // six reviews we had answered days earlier, as an issue titled "답글 도착". Everything
+  // before our own last comment on a thread is, by construction, something we saw — we
+  // replied after it. So seed the watermark there, and fall back to where we joined only
+  // for a thread we have never spoken in.
+  const watermark = seen?.watermark ?? (ours.length ? ours[ours.length - 1].at : joinedAt);
   const fresh = others.filter(c => c.at > watermark);
   const newest = others.length ? others[others.length - 1].at : null;
 
@@ -177,7 +183,12 @@ for (const x of news) {
 console.log(news.length ? `\n${news.length} update(s).` : 'No replies.');
 
 if (process.env.GITHUB_OUTPUT) {
+  // `ran` is written last, so it exists only when every fetch above succeeded. The
+  // briefing reads it to tell "checked, nothing new" from "never checked": without it a
+  // crashed watcher and a quiet day produced the same page, and the page said the day
+  // was quiet.
   writeFileSync(process.env.GITHUB_OUTPUT,
     `replied=${news.length > 0}\n` +
-    `summary<<TCLK_EOF\n${body}\nTCLK_EOF\n`, { flag: 'a' });
+    `summary<<TCLK_EOF\n${body}\nTCLK_EOF\n` +
+    `ran=true\n`, { flag: 'a' });
 }

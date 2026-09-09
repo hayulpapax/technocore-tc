@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getText } from './http.mjs';
+import { get } from './http.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -73,7 +73,13 @@ const normalize = text => text
   .join('\n');
 
 async function fingerprint(url) {
-  const text = normalize(await getText(url, { label: url }));
+  // http.mjs hands a 404 back as a response rather than throwing, so a document that
+  // has been taken down used to be fingerprinted as whatever the error page said and
+  // reported as "CHANGED: +3/-412 lines". A page that is gone is a different event from
+  // a page that moved, and the one this watcher most needs to say plainly.
+  const res = await get(url, { label: url });
+  if (res.status === 404) return { gone: true, sha256: null, bytes: 0, lines: 0, line_hashes: [] };
+  const text = normalize(await res.text());
   const lines = text.split('\n');
   return { sha256: sha(text), bytes: Buffer.byteLength(text, 'utf8'), lines: lines.length,
            line_hashes: lines.map(lineHash) };
@@ -103,8 +109,18 @@ for (const { url, group } of WATCHED) {
   const prev  = previous.files?.[url];
   current.files[url] = fp;
 
-  if (!prev) {
-    console.log(`  NEW      [${group}] ${label}  (${fp.lines} lines, ${fp.bytes} bytes) — baseline recorded`);
+  if (fp.gone) {
+    if (prev?.gone) { console.log(`  gone     [${group}] ${label}  (still 404)`); continue; }
+    console.log(`  GONE     [${group}] ${label}: HTTP 404 — the document was taken down`);
+    changes.push({ url, label, group, gone: true, added: 0, removed: prev?.lines ?? 0,
+                   before: prev?.sha256?.slice(0, 12) ?? '—', after: '404',
+                   bytes_before: prev?.bytes ?? 0, bytes_after: 0 });
+    continue;
+  }
+  if (!prev || prev.gone) {
+    console.log(`  NEW      [${group}] ${label}  (${fp.lines} lines, ${fp.bytes} bytes) — ${prev ? 'back after a 404' : 'baseline recorded'}`);
+    if (prev) changes.push({ url, label, group, added: fp.lines, removed: 0, before: '404',
+                             after: fp.sha256.slice(0, 12), bytes_before: 0, bytes_after: fp.bytes });
     continue;
   }
   if (prev.sha256 === fp.sha256) {
@@ -124,7 +140,9 @@ writeFileSync(FILE, JSON.stringify(current, null, 1) + '\n');
 // The workflow reads these to decide whether to open an issue.
 if (process.env.GITHUB_OUTPUT) {
   const project = changes.filter(c => c.group === 'project');
-  const row = c => `| [\`${c.label}\`](${c.url}) | +${c.added} / -${c.removed} | ${c.bytes_before} → ${c.bytes_after} | \`${c.before}\` → \`${c.after}\` |`;
+  const row = c => c.gone
+    ? `| [\`${c.label}\`](${c.url}) | **GONE — HTTP 404** | ${c.bytes_before} → 0 | \`${c.before}\` → 404 |`
+    : `| [\`${c.label}\`](${c.url}) | +${c.added} / -${c.removed} | ${c.bytes_before} → ${c.bytes_after} | \`${c.before}\` → \`${c.after}\` |`;
   const table = list => ['| document | lines | bytes | sha256 |', '|---|---|---|---|', ...list.map(row)];
 
   const body = changes.length ? [
@@ -152,7 +170,8 @@ if (process.env.GITHUB_OUTPUT) {
   writeFileSync(process.env.GITHUB_OUTPUT,
     `changed=${changes.length > 0}\n` +
     `project_changed=${project.length > 0}\n` +
-    `summary<<DRIFT_EOF\n${body}\nDRIFT_EOF\n`, { flag: 'a' });
+    `summary<<DRIFT_EOF\n${body}\nDRIFT_EOF\n` +
+    `ran=true\n`, { flag: 'a' });   // reached only if every document was fetched
 }
 
 console.log(changes.length ? `\n${changes.length} document(s) changed.` : '\nNo drift.');

@@ -40,11 +40,13 @@ export async function get(url, { attempts = 6, base = 700, label = url, headers,
       // a 429 states its wait in the body; honour Retry-After when present
       const ra = Number(res.headers.get('retry-after'));
       if (ra > 0) await sleep(Math.min(ra * 1000, 20000));
-      process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${label} HTTP ${res.status}\n`);
+      // Say a retry is coming only when one is. The last attempt used to log
+      // "retry 6/5" and then throw, which reads as a seventh try that never happened.
+      if (i < attempts - 1) process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${label} HTTP ${res.status}\n`);
     } catch (e) {
       if (last && e === last) throw e;                  // non-retryable status
       last = e;
-      process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${label} ${e.message}\n`);
+      if (i < attempts - 1) process.stderr.write(`  retry ${i + 1}/${attempts - 1} — ${label} ${e.message}\n`);
     }
   }
   throw last ?? new Error(`${label}: exhausted retries`);

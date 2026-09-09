@@ -69,15 +69,24 @@ jobs:
       - name: Redraw the census chart
         run: node tools/chart.mjs
 
+      # The four watches below are continue-on-error, and each one writes `ran=true` as
+      # the last line of its output. Before that, a watcher that threw — one GitHub API
+      # hiccup past the retry budget — ended the job here: the census computed a minute
+      # earlier was never committed, the drift issue two steps down was never opened,
+      # and the briefing was never rewritten, so the routine read yesterday's page as
+      # today's. Now the job carries on, and the briefing names the watch that did not
+      # finish instead of counting it as quiet.
       - name: Check the protocol documents for drift
         id: drift
+        continue-on-error: true
         run: node tools/drift.mjs
 
       # A web search and an inbox both report "nothing new" almost every day, because
       # this project publishes as tags and repositories rather than as articles. Five
       # versions shipped in nine days while the news said nothing.
-      - name: Check flop-labs for releases and new repositories
+      - name: Check flop-labs for releases, tags and new repositories
         id: releases
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-releases.mjs
@@ -95,8 +104,9 @@ jobs:
       # Replies to comments this repository left on flop-labs/tclk. Tracked here
       # rather than by notification because a reply is easy to miss in a repo
       # moving this fast, and because the state file makes it announce once.
-      - name: Check for replies on tclk
+      - name: Check for replies on tclk and technocore-chat
         id: tclk
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-tclk.mjs
@@ -104,16 +114,22 @@ jobs:
       # One Korean page saying what today held, written from the steps above rather
       # than fetched again. The daily briefing reads this out of a checkout, which is
       # the one channel that does not depend on notification mail arriving.
+      # The *_RAN inputs are empty for a watcher that did not reach its last line; the
+      # briefing reports those as unchecked rather than as quiet.
       - name: Write the Korean briefing
         env:
+          DRIFT_RAN: ${{ steps.drift.outputs.ran }}
           DRIFT_CHANGED: ${{ steps.drift.outputs.changed }}
           DRIFT_PROJECT: ${{ steps.drift.outputs.project_changed }}
           DRIFT_SUMMARY: ${{ steps.drift.outputs.summary }}
+          RELEASES_RAN: ${{ steps.releases.outputs.ran }}
           RELEASES_NEWS: ${{ steps.releases.outputs.news }}
           RELEASES_HEADLINE: ${{ steps.releases.outputs.headline }}
           RELEASES_SUMMARY: ${{ steps.releases.outputs.summary }}
+          TCLK_RAN: ${{ steps.tclk.outputs.ran }}
           TCLK_REPLIED: ${{ steps.tclk.outputs.replied }}
           TCLK_SUMMARY: ${{ steps.tclk.outputs.summary }}
+          GUIDE_RAN: ${{ steps.guide.outputs.ran }}
           GUIDE_DRIFTED: ${{ steps.guide.outputs.drifted }}
           GUIDE_SUMMARY: ${{ steps.guide.outputs.summary }}
         run: node tools/briefing.mjs
@@ -129,7 +145,7 @@ jobs:
             exit 0
           fi
           headline=$(node -e "const s=require('./data/census-latest.json');
-            process.stdout.write('sharded '+s.sharded_total+', legacy '+s.legacy_total+(s.legacy_at_cap?' (at cap)':''))")
+            process.stdout.write('sharded '+s.sharded_total+', legacy '+(s.legacy_total ?? 'unreadable')+(s.legacy_at_cap?' (at cap)':''))")
           git commit -m "data: daily census and protocol fingerprints" -m "$headline"
           git push
 
@@ -189,10 +205,13 @@ jobs:
               console.log('| | |');
               console.log('|---|---|');
               console.log('| sharded notes | '+s.sharded_total.toLocaleString()+' |');
-              console.log('| legacy notes | '+s.legacy_total.toLocaleString()+(s.legacy_at_cap?' **(at cap)**':'')+' |');
+              console.log('| legacy notes | '+(s.legacy_total === null ? 'unreadable' : s.legacy_total.toLocaleString())+(s.legacy_at_cap?' **(at cap)**':'')+' |');
               console.log('| shards with notes | '+s.shards_with_notes+' of 256 |');"
             echo ""
-            echo "protocol drift: ${{ steps.drift.outputs.changed }}"
-            echo ""
-            echo "tclk replies: ${{ steps.tclk.outputs.replied }}"
+            echo "| watch | ran | news |"
+            echo "|---|---|---|"
+            echo "| drift | ${{ steps.drift.outputs.ran }} | ${{ steps.drift.outputs.changed }} |"
+            echo "| releases | ${{ steps.releases.outputs.ran }} | ${{ steps.releases.outputs.news }} |"
+            echo "| tclk | ${{ steps.tclk.outputs.ran }} | ${{ steps.tclk.outputs.replied }} |"
+            echo "| guide | ${{ steps.guide.outputs.ran }} | ${{ steps.guide.outputs.drifted }} |"
           } >> "$GITHUB_STEP_SUMMARY"

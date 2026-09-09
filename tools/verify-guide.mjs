@@ -207,7 +207,8 @@ if (process.env.GITHUB_OUTPUT) {
   const { writeFileSync } = await import('node:fs');
   writeFileSync(process.env.GITHUB_OUTPUT,
     `drifted=${bad.length > 0}\n` +
-    `summary<<GUIDE_EOF\n${body}\nGUIDE_EOF\n`, { flag: 'a' });
+    `summary<<GUIDE_EOF\n${body}\nGUIDE_EOF\n` +
+    `ran=true\n`, { flag: 'a' });   // absent when a fetch threw before the checks finished
 }
 
 process.exitCode = bad.length ? 1 : 0;

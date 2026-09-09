@@ -532,7 +532,9 @@ const cmds = {
       exported_at: new Date().toISOString(), source: r.url,
     }, null, 1) + '\n');
 
-    console.log(`${out}  ${lines.toLocaleString()} records  ${(r.text.length / 1024).toFixed(1)} KiB`);
+    // Bytes, not string length: a Korean room's export is about three bytes per
+    // character, and the figure is labelled KiB.
+    console.log(`${out}  ${lines.toLocaleString()} records  ${(Buffer.byteLength(r.text, 'utf8') / 1024).toFixed(1)} KiB`);
     console.log(`${meta}  generation ${gen ?? 'unknown'}`);
   },
 
@@ -560,6 +562,10 @@ const cmds = {
       } catch { generation = null; genSource = 'no sidecar beside the file'; }
     } else {
       const r = await http('GET', `/r/${room}/export`);
+      // A room that does not exist answers with a short error body, and that body used
+      // to be audited: "records: 1 (1 unparseable), signed records: 0" for a name that
+      // was never a room. Say what the service said instead.
+      if (r.status !== 200) { show(r); return; }
       text = r.text;
       generation = generationOf(r);
       genSource = generation === null ? 'service sent no X-Room-Generation' : 'live';
@@ -568,22 +574,20 @@ const cmds = {
 
     let signed = 0, ok = 0, bad = 0, unparsed = 0, naiveWouldFail = 0, pastSafe = 0;
     const failures = [];
+    // The exact digits of the stored nonce, read off the line itself. The reviver's
+    // `context.source` does this cleanly but exists only from Node 21; this file says
+    // "Node 18+" on its first line, and on 18 or 20 the reviver silently handed back the
+    // rounded number. The audit then rebuilt a preimage with the wrong digits and
+    // reported thousands of honest records as FAILED — on the version this tool claims
+    // to support. The top-level `"nonce":` key cannot occur inside a JSON string value,
+    // where every quote is escaped, so the first match is the record's own field.
+    const NONCE_RAW = /"nonce"\s*:\s*"?(\d{1,19})"?/;
     for (const line of lines) {
-      let rec, exactNonce;
-      try {
-        // The nonce may run to 19 digits — past 2^53 — and JSON.parse rounds it,
-        // which silently corrupts the canonical string and fails good signatures.
-        // The reviver's `context.source` hands back the digits as written.
-        rec = JSON.parse(line, function (k, v, ctx) {
-          if (k === 'nonce' && ctx && typeof ctx.source === 'string') {
-            exactNonce = ctx.source;
-            return ctx.source;
-          }
-          return v;
-        });
-      } catch { unparsed++; continue; }
+      let rec;
+      try { rec = JSON.parse(line); } catch { unparsed++; continue; }
       if (!rec?.sig || !String(rec.from ?? '').startsWith('did:key:')) continue;
       signed++;
+      const exactNonce = NONCE_RAW.exec(line)?.[1] ?? String(rec.nonce);
 
       // Two different counts, and the report used to print one under the other's name.
       // "Past 2^53" is the protocol fact; "rounded by JSON.parse" is the one that costs a
@@ -593,7 +597,7 @@ const cmds = {
       // the smaller number as the larger one's name overstates how safe the boundary is.
       try { if (BigInt(exactNonce) > 9007199254740991n) pastSafe++; } catch { /* not decimal */ }
       // What a reader using plain JSON.parse would have rebuilt.
-      if (String(JSON.parse(line).nonce) !== exactNonce) naiveWouldFail++;
+      if (String(rec.nonce) !== exactNonce) naiveWouldFail++;
 
       try {
         const payload = Buffer.from(`${room}|${exactNonce}|${rec.text}`, 'utf8');
