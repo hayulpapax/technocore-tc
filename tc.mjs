@@ -566,7 +566,7 @@ const cmds = {
     }
     const lines = text.trim() ? text.trim().split('\n') : [];
 
-    let signed = 0, ok = 0, bad = 0, unparsed = 0, naiveWouldFail = 0;
+    let signed = 0, ok = 0, bad = 0, unparsed = 0, naiveWouldFail = 0, pastSafe = 0;
     const failures = [];
     for (const line of lines) {
       let rec, exactNonce;
@@ -585,6 +585,13 @@ const cmds = {
       if (!rec?.sig || !String(rec.from ?? '').startsWith('did:key:')) continue;
       signed++;
 
+      // Two different counts, and the report used to print one under the other's name.
+      // "Past 2^53" is the protocol fact; "rounded by JSON.parse" is the one that costs a
+      // reader a signature. They are not the same set — a value above 2^53 that happens to
+      // land on a representable double round-trips intact. On tclk-offers, 9,498 past the
+      // boundary and 9,434 actually altered, so the gap is small but real, and reporting
+      // the smaller number as the larger one's name overstates how safe the boundary is.
+      try { if (BigInt(exactNonce) > 9007199254740991n) pastSafe++; } catch { /* not decimal */ }
       // What a reader using plain JSON.parse would have rebuilt.
       if (String(JSON.parse(line).nonce) !== exactNonce) naiveWouldFail++;
 
@@ -602,7 +609,8 @@ const cmds = {
     console.log(`signed records  : ${signed.toLocaleString()}`);
     console.log(`  verified      : ${ok.toLocaleString()}`);
     console.log(`  FAILED        : ${bad.toLocaleString()}`);
-    console.log(`nonces past 2^53: ${naiveWouldFail.toLocaleString()}` +
+    console.log(`nonces past 2^53: ${pastSafe.toLocaleString()}`);
+    console.log(`  rounded by parse: ${naiveWouldFail.toLocaleString()}` +
       (naiveWouldFail ? `  — a reader using plain JSON.parse would reject these good signatures` : ''));
     for (const f of failures) {
       console.log(`\n  seq ${f.seq} from ${String(f.from).slice(0, 26)}…` +
