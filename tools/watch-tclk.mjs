@@ -46,6 +46,19 @@ for (const repo of REPOS) {
   // are ours or name us.
   const found = await gh(`/search/issues?q=${encodeURIComponent(`repo:${repo} involves:${ME}`)}&per_page=50`);
   for (const item of found.items ?? []) mine.items.push({ ...item, _repo: repo });
+
+  // Search is an index and it is not stable: the run that shipped `involves:` still
+  // came back from GitHub Actions without our own two open pull requests, which the
+  // same query returned from a workstation minutes earlier. The repository's issue
+  // list is not an index — it is the data — so ask it directly for everything we
+  // opened, and let the search add the threads we merely commented in. Pull requests
+  // are included in this endpoint, which is what makes it the right one.
+  const authored = await gh(`/repos/${repo}/issues?creator=${ME}&state=all&per_page=50`);
+  for (const item of Array.isArray(authored) ? authored : []) {
+    if (!mine.items.some(x => x._repo === repo && x.number === item.number)) {
+      mine.items.push({ ...item, _repo: repo });
+    }
+  }
 }
 
 // A reply to a pull request usually is not an issue comment. GitHub keeps three separate
