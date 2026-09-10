@@ -1,32 +1,51 @@
-# FLOP 일일 브리핑 — 조사 2026-09-09 16:26 KST
+# FLOP 일일 브리핑 — 조사 2026-09-10 16:23 KST
 
-**노트 수가 하루 만에 195,226개 줄었습니다**
+**flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다**
 
-- 조사 시각: 2026-09-09 16:26 KST (원문 2026-09-09T07:26:16.400Z UTC) — 1시간 전
+- 조사 시각: 2026-09-10 16:23 KST (원문 2026-09-10T07:23:11.918Z UTC) — 0시간 전
 - 서비스 버전: `0.13.0`
-- 조사 횟수: 14회 (2026-08-26부터)
+- 조사 횟수: 15회 (2026-08-26부터)
 
 ## 수치
 
 | | 오늘 | 어제 대비 |
 |---|---|---|
-| 현행 샤딩 경로 노트 | 1,542,227 | -195,226 (-11.2%) |
-| 레거시 경로 노트 | 163,194 | -653 (-0.4%) |
+| 현행 샤딩 경로 노트 | 1,542,637 | +410 (+0.0%) |
+| 레거시 경로 노트 | 163,726 | +532 (+0.3%) |
 | 레거시 상한 | 163,840 | 변화 없음 |
-| 샤드당 중앙값 | 6,020 | -764 (-11.3%) |
+| 샤드당 중앙값 | 6,027 | +7 (+0.1%) |
 
 읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.
 
-## 하루 만에 크게 줄었습니다
+## 문서가 바뀌었습니다
 
-노트 수가 1,737,453 → 1,542,227 로 195,226개 감소했습니다. 샤드당 중앙값도 6,784 → 6,020 로 같이 움직였으므로, 일부 샤드만의 문제가 아니라 전체에 걸친 변화입니다.
+## flop.finance moved
 
-노트는 7일간 쓰기가 없으면 삭제됩니다(`retention_seconds: 604800`). 7일 전에 크게 늘었다면 그 물결이 만료된 것과 일치합니다 — 다만 서버가 그렇게 공지한 것은 아니므로 단정하지는 마십시오.
+This is the group worth reading first. The testnet, the faucet and the
+tokenomics are published here, and this is the announcement being waited on.
+
+| document | lines | bytes | sha256 |
+|---|---|---|---|
+| [`flop.finance/teaser/`](https://flop.finance/teaser/) | +1 / -1 | 49826 → 49817 | `8d4e3de68175` → `032f0489d177` |
+
+Tracked by fingerprint, so the counts are exact but the text is not stored
+here — read the live document to see what moved. Then check whether
+`tc.mjs` and `GUIDE.ko.md` still match it.
+
+## flop-labs 배포/저장소
+
+## A new repository appeared in flop-labs
+
+This is the signal worth reading first — a testnet, a faucet or an inference
+API shows up here before it is written about anywhere.
+
+- **[yellowpaper](https://github.com/flop-labs/yellowpaper)** — created 2026-09-04
+  FLOP Network yellowpaper — normative specification for a verified-inference settlement layer. Feedback via Issues.
 
 ## 오늘 확인한 것들
 
-- technocore.chat 프로토콜 문서 7종 — 변화 없음
-- flop-labs 조직의 새 릴리스·태그·저장소 — 변화 없음
+- technocore.chat 프로토콜 문서 7종 — **변화 있음** (위 참조)
+- flop-labs 조직의 새 릴리스·태그·저장소 — **변화 있음** (위 참조)
 - tclk·technocore-chat 에 남긴 글의 답글 — 변화 없음
 - 한국어 가이드의 수치·동작 주장 (서버와 대조) — 변화 없음
 
