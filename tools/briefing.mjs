@@ -146,7 +146,16 @@ const out = [
   ] : []),
   `**${isToday ? headline : `[${measuredDay ?? last.date} 조사분 · 새 소식 아님] ${headline}`}**`,
   '',
-  `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC) — ${Number.isFinite(ageHours) ? `${Math.round(ageHours)}시간 전` : '시각 불명'}`,
+  // The age, and what it means — because on its own it has now been misread twice as
+  // staleness. The census is scheduled for 02:15 UTC and has never once run then: fifteen
+  // scheduled runs, every one 4.7-6.8 hours late, landing 16-18 KST. A reader in the
+  // morning therefore always sees a figure 15-18 hours old, and that IS the newest one
+  // there is. A rule that suppressed anything older than twelve hours suppressed every
+  // census report ever, and buried a real 195,226-note drop on 2026-09-10.
+  `- 조사 시각: ${kst(last.at)} (원문 ${last.at} UTC) — ${Number.isFinite(ageHours) ? `${Math.round(ageHours)}시간 전` : '시각 불명'}` +
+    (Number.isFinite(ageHours) && ageHours >= 12 && !stale
+      ? ' — **정상입니다.** 조사는 매일 16~18시 KST 에 돌므로 아침에 읽으면 15~18시간 전이 나옵니다. 이게 오늘 기준 최신 수치이며, 오래됐다는 뜻이 아닙니다.'
+      : ''),
   `- 서비스 버전: \`${last.version}\`${prev && prev.version !== last.version ? ` — 어제 \`${prev.version}\` 에서 올라감` : ''}`,
   `- 조사 횟수: ${rows.length}회 (${rows[0].date}부터)`,
   '',

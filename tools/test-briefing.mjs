@@ -92,6 +92,13 @@ const headlineOf = page => (page.match(/^\*\*(.+)\*\*$/m) || [, '(헤드라인 �
   check('나이를 시간 단위로 항상 적는다',
         /조사 시각:.*시간 전/.test(page),
         (page.match(/^- 조사 시각:.*$/m) || [''])[0].slice(0, 88));
+  // The routine reads this page around 09:00 KST and the census lands 16-18 KST, so the
+  // age is always 15-18 hours. Twice now that number has been mistaken for staleness and
+  // turned into a rule that suppressed every census report. The page has to say what the
+  // number means, not only what it is.
+  check('12시간을 넘겼지만 멈춘 건 아닐 때, 그게 정상이라고 페이지가 직접 말한다',
+        /시간 전 — \*\*정상입니다\.\*\*/.test(page) && page.includes('오래됐다는 뜻이 아닙니다'),
+        (page.match(/^- 조사 시각:.*$/m) || [''])[0].slice(0, 150));
 }
 
 // --- an old census: the watch may actually be broken ---------------------------------
