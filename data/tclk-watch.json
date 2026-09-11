@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-09-10T07:23:35.211Z",
+ "checked_at": "2026-09-11T07:22:13.333Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -22,6 +22,61 @@
    "watermark": "2026-09-09T07:58:44Z",
    "replies_since_we_joined": 0,
    "last_reply_at": "2026-09-04T01:57:20Z"
+  },
+  "flop-labs/yellowpaper#43": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "ambiguity: R13.0b normatively extends \"the challenge/response window once\" — two windows, no magnitude, and the build-time integrity_test cannot see it",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/43",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-10T23:40:18Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
+  },
+  "flop-labs/yellowpaper#42": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "challenge: §1.2's normative reading rule asserts \"enactment outlives unbonding\", but the enactment timelock is 14 d against a 21 d unbonding",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/42",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-10T23:37:38Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
+  },
+  "flop-labs/yellowpaper#41": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "ambiguity: R14.5's safety envelope floors stake at \"1200\", a number that appears nowhere else in the repository",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/41",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-10T23:33:24Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
+  },
+  "flop-labs/yellowpaper#40": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "ambiguity: validator unbond safety is stated three ways — §15.7 says slash-lock, V11 and Appendix I say margin, and V11's inequality is short by 2 h",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/40",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-10T23:31:10Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
+  },
+  "flop-labs/yellowpaper#37": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "ambiguity: §1.2's PoUI rate-limit epoch is stated as 1 day but cites a count parameter, and \"epoch\" is defined as 1 h one row above",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/37",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-10T23:26:53Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
   }
  }
 }
