@@ -45,6 +45,23 @@ const WATCHED = [
   { url: 'https://flop.finance/teaser/',                  group: 'project'  },
   { url: 'https://flop.finance/brand/',                   group: 'project'  },
   { url: 'https://flop.finance/design.md',                group: 'project'  },
+
+  // spec — flop-labs/yellowpaper, the definitive FLOP specification. Two files, for two
+  // different reasons.
+  //
+  // yellowpaper.md: this repository has five open issues against it, every one quoting a
+  // passage by section and line. The maintainer has already answered three earlier reports
+  // with "Fixed upstream and merged", and those fixes reach the public mirror on a later
+  // sync — at which point our citations move under us and a finding may have been silently
+  // addressed or silently relocated. Neither watcher saw that: the reply watch follows
+  // threads, not documents, and this one was pointed only at technocore.chat and
+  // flop.finance.
+  //
+  // CHANGELOG.md: CONTRIBUTING says accepted reports are credited there by GitHub handle.
+  // It is the ledger that says whether a contribution landed, so the day it moves is the
+  // day to go and look.
+  { url: 'https://raw.githubusercontent.com/flop-labs/yellowpaper/main/yellowpaper.md', group: 'spec' },
+  { url: 'https://raw.githubusercontent.com/flop-labs/yellowpaper/main/CHANGELOG.md',   group: 'spec' },
 ];
 
 const sha = s => createHash('sha256').update(s, 'utf8').digest('hex');
@@ -145,6 +162,9 @@ if (process.env.GITHUB_OUTPUT) {
     : `| [\`${c.label}\`](${c.url}) | +${c.added} / -${c.removed} | ${c.bytes_before} → ${c.bytes_after} | \`${c.before}\` → \`${c.after}\` |`;
   const table = list => ['| document | lines | bytes | sha256 |', '|---|---|---|---|', ...list.map(row)];
 
+  const spec = changes.filter(c => c.group === 'spec');
+  const protocol = changes.filter(c => c.group === 'protocol');
+
   const body = changes.length ? [
     ...(project.length ? [
       '## flop.finance moved',
@@ -154,13 +174,25 @@ if (process.env.GITHUB_OUTPUT) {
       '',
       ...table(project), '',
     ] : []),
-    ...(changes.length > project.length ? [
+    ...(spec.length ? [
+      '## The yellowpaper mirror moved',
+      '',
+      'Five open issues from this repository quote `yellowpaper.md` by section and line.',
+      'A sync republishes upstream fixes, so check whether any of them was addressed —',
+      'or merely relocated, which leaves the citation pointing at the wrong place.',
+      '',
+      'If `CHANGELOG.md` is in the list, read it first: accepted reports are credited',
+      'there by GitHub handle.',
+      '',
+      ...table(spec), '',
+    ] : []),
+    ...(protocol.length ? [
       '## technocore.chat protocol documents moved',
       '',
       'A change here can make this client wrong — the sweep rules and three caps',
       'have already moved once.',
       '',
-      ...table(changes.filter(c => c.group === 'protocol')), '',
+      ...table(protocol), '',
     ] : []),
     'Tracked by fingerprint, so the counts are exact but the text is not stored',
     'here — read the live document to see what moved. Then check whether',
