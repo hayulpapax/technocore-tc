@@ -30,6 +30,12 @@ const row = (date, at, sharded, median) =>
   [date, at, '0.13.0', sharded, 1000, 1000, 'true', 50, 100, 256, 0, 1, median, 9].join('\t');
 
 const dayOf = d => d.toISOString().slice(0, 10);
+// The page dates a measurement by the reader's day, which is KST, while the history
+// file's `date` column is the UTC day census wrote. The two differ for every hour after
+// 15:00 UTC, so an expectation built with dayOf() passes all morning and fails all
+// evening — which is how this sat green until 23:55 UTC. Build the expectation the way
+// the page does.
+const kstDayOf = d => new Date(d.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 const now = new Date();
 const daysAgo = n => new Date(now.getTime() - n * 86_400_000);
 
@@ -82,7 +88,7 @@ const headlineOf = page => (page.match(/^\*\*(.+)\*\*$/m) || [, '(헤드라인 �
   ]);
   const h = headlineOf(page);
   check('어제 조사분이면 헤드라인 자체가 "새 소식 아님" 을 달고 나온다',
-        h.includes('새 소식 아님') && h.includes(dayOf(one)), h);
+        h.includes('새 소식 아님') && h.includes(kstDayOf(one)), h);
   check('어제 조사분이면 제목과 본문이 오늘 조사 전임을 밝힌다',
         page.includes('오늘 조사 전') && /오늘\([0-9-]+\) 조사는 아직 돌지 않았습니다/.test(page),
         page.split('\n')[0]);

@@ -113,6 +113,14 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-tclk.mjs
 
+      # Where this account stands in the sonnet contest. A background watcher reports to
+      # whoever launched it and reaches nobody; the briefing is the channel the daily
+      # routine reads aloud, so a registration receipt, a refusal, or a deadline arriving
+      # with no ballot cast has to surface there. Read-only — it never registers or votes.
+      - name: Read the sonnet contest status
+        continue-on-error: true
+        run: node tools/sonnet-status.mjs
+
       # One Korean page saying what today held, written from the steps above rather
       # than fetched again. The daily briefing reads this out of a checkout, which is
       # the one channel that does not depend on notification mail arriving.

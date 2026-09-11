@@ -45,6 +45,20 @@ const prev = rows[rows.length - 2];
 const env = k => (process.env[k] || '').trim();
 const on = k => env(k) === 'true';
 
+// The sonnet contest, if tools/sonnet-status.mjs has written a reading. A background
+// watcher reports to the session that launched it and reaches nobody; this page is the
+// one channel the daily routine actually reads aloud, so anything time-boxed has to
+// arrive here. Absent file means the contest is over or was never set up — not an error.
+let sonnet = null;
+try {
+  sonnet = JSON.parse(readFileSync(join(ROOT, 'data', 'sonnet-status.json'), 'utf8'));
+} catch { /* no contest being tracked */ }
+// Two things need a person: a refusal, and a deadline arriving with no ballot cast.
+const sonnetNeedsYou = sonnet && (
+  (sonnet.registration?.receipt && !/acc/i.test(sonnet.registration.receipt.status ?? '')) ||
+  (sonnet.hours_left > 0 && sonnet.hours_left <= 48 && !sonnet.vote?.we_have_voted) ||
+  sonnet.referee_owns_rules === false);
+
 // KST is what the reader thinks in; UTC is what the service stamps. Both, always — a
 // briefing that gives only one of them makes the reader do arithmetic to place an event.
 const kstDate = iso => {
@@ -106,7 +120,13 @@ const quiet    = !anyNews && notRun.length === 0;
 // and a watch that did not run before a quiet day, because "quiet" is a claim the
 // missing watch cannot support.
 const headline =
-  project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
+  sonnetNeedsYou && sonnet.referee_owns_rules === false
+           ? `소네트 대회: 심판이 ${sonnet.contest} 규칙 방의 소유자가 아닙니다 — 진행을 멈추고 확인하십시오`
+: sonnetNeedsYou && sonnet.registration?.receipt
+           ? `소네트 대회: 등록이 거절됐습니다 — ${sonnet.registration.receipt.reason ?? '사유 미상'}`
+: sonnetNeedsYou
+           ? `소네트 대회: 마감까지 ${sonnet.hours_left}시간인데 아직 투표하지 않았습니다`
+: project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
 : releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
 : drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
 : tclk     ? '우리가 남긴 글에 답글이 달렸습니다'
@@ -200,6 +220,34 @@ if (tclk) {
 }
 if (guideOff) {
   out.push('## 한국어 가이드 불일치', '', env('GUIDE_SUMMARY') || '(요약 없음)', '');
+}
+
+if (sonnet) {
+  const r = sonnet.registration ?? {};
+  const v = sonnet.vote ?? {};
+  const line = r.receipt
+    ? `**${/acc/i.test(r.receipt.status) ? '수락됨' : '거절됨'}** (${r.receipt.ts?.slice(11, 19)}Z)` +
+      (r.receipt.reason ? ` — ${r.receipt.reason}` : '')
+    : r.queue
+    ? `심판 대기열 — 앞에 ${r.queue.ahead_of_us.toLocaleString()}건, ` +
+      `분당 ${r.queue.seq_per_min}건 처리, 약 ${r.queue.eta_hours}시간 뒤 예상`
+    : r.posted ? '등록은 올렸고 대기열 추정 불가' : '아직 등록하지 않음';
+
+  out.push(
+    `## 소네트 대회 (${sonnet.contest})`, '',
+    `- 마감까지 **${sonnet.hours_left}시간** (${sonnet.deadline})`,
+    `- 우리 등록: ${line}`,
+    `- 심판이 규칙 방을 소유: ${sonnet.referee_owns_rules ? '예 — 영수증을 신뢰할 수 있습니다' : '**아니오 — 이 대회의 영수증은 증거가 아닙니다**'}`,
+    `- 수락된 출품작 ${sonnet.entries?.referee_accepted ?? 0}편 (제출 시도 ${sonnet.entries?.submissions_seen ?? 0}건, 거절 ${sonnet.entries?.referee_rejected ?? 0}건)`,
+    `- 집계된 표 ${v.accepted_ballots ?? 0}장 · 우리 투표: ${v.we_have_voted ? `완료 (${v.our_choice})` : '아직'}`,
+    '');
+  if (v.standings?.length) {
+    out.push('| 출품작 | 표 |', '|---|---:|',
+      ...v.standings.map(s => `| \`${s.entry_id}\` | ${s.votes} |`), '');
+  }
+  out.push(
+    '표는 마감 전까지 바꿀 수 있으므로 서둘러 던질 이유가 없습니다. 다만 **실격작에 투표하면 그 표는',
+    '대체 없이 버려집니다** — 자격 심사를 통과한 작품 중에서 고르십시오.', '');
 }
 
 // What was checked, item by item, with the ones that were not checked named as such.
