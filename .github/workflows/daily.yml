@@ -101,10 +101,12 @@ jobs:
         continue-on-error: true
         run: node tools/verify-guide.mjs
 
-      # Replies to comments this repository left on flop-labs/tclk. Tracked here
-      # rather than by notification because a reply is easy to miss in a repo
-      # moving this fast, and because the state file makes it announce once.
-      - name: Check for replies on tclk and technocore-chat
+      # Replies to threads this account opened or commented on across flop-labs —
+      # tclk, technocore-chat and yellowpaper. Tracked here rather than by notification
+      # because a reply is easy to miss in repositories moving this fast, and because the
+      # state file makes it announce once. yellowpaper especially: its maintainer answers
+      # in batches, so a reply can land days after the thread goes quiet.
+      - name: Check for replies across flop-labs
         id: tclk
         continue-on-error: true
         env:
@@ -185,7 +187,7 @@ jobs:
             --title "한국어 가이드가 서버와 어긋납니다 — $(date -u +%Y-%m-%d)" \
             --body "$SUMMARY"
 
-      - name: Open an issue when someone replies on tclk
+      - name: Open an issue when someone replies to us
         if: steps.tclk.outputs.replied == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -193,7 +195,7 @@ jobs:
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --assignee "$GITHUB_REPOSITORY_OWNER" \
-            --title "tclk 답글 도착 — $(date -u +%Y-%m-%d)" \
+            --title "답글 도착 — $(date -u +%Y-%m-%d)" \
             --body "$SUMMARY"
 
       - name: Summary

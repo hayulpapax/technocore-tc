@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Watch the tclk threads this repository has spoken in, and say when someone
+// Watch the flop-labs threads this account has spoken in, and say when someone
 // replies.
 //
-// The point is a reply to us, not activity in general: flop-labs/tclk moves fast
+// The point is a reply to us, not activity in general: these repositories move fast
 // enough that "something changed" is not information. So this tracks only threads
-// we have commented on, and only reports comments newer than our own last one —
+// we opened or commented on, and only reports comments newer than our own last one —
 // plus whether the issue was closed or a linked PR landed, since either of those
 // answers the comment as surely as a reply does.
 //
@@ -18,11 +18,17 @@ import { getJson } from './http.mjs';
 const HERE  = dirname(fileURLToPath(import.meta.url));
 const DATA  = join(HERE, '..', 'data');
 const STATE = join(DATA, 'tclk-watch.json');
-// Both repositories, because we have open pull requests on both and the reviews land
-// wherever they land. Watching only tclk is why three reviews on technocore-chat#794 sat
-// unread for a day: two of them said the guard in that PR covers two of three knobs, which
-// is precisely the kind of thing this watcher exists to put in front of someone.
-const REPOS = (process.env.WATCH_REPOS || 'flop-labs/tclk,flop-labs/technocore-chat')
+// Every flop-labs repository this account has spoken in, because the replies land wherever
+// they land. Watching only tclk is why three reviews on technocore-chat#794 sat unread for
+// a day: two of them said the guard in that PR covers two of three knobs, which is
+// precisely the kind of thing this watcher exists to put in front of someone.
+//
+// yellowpaper joined the list the day five issues were opened there. It is the definitive
+// spec and its maintainer answers in batches — #5 through #15 were all answered, then
+// nothing through #43 — so a reply can arrive days after the thread goes quiet, which is
+// exactly the case a state file beats a notification inbox at.
+const REPOS = (process.env.WATCH_REPOS ||
+  'flop-labs/tclk,flop-labs/technocore-chat,flop-labs/yellowpaper')
   .split(',').map(r => r.trim()).filter(Boolean);
 const ME    = process.env.TCLK_USER || 'hayulpapax';
 const API   = 'https://api.github.com';
