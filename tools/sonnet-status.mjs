@@ -108,6 +108,11 @@ const ours = regVerdicts.filter(v => v.sender_did === ME);
 // not "not registered", and the two have to be reported differently or a silent eviction
 // reads as a silent rejection.
 const oldest = reg.length ? reg[0].seq : null;
+// `intake_seq` is the referee's own counter across all 32 rooms it reads, not a seq in
+// this room — measured 2026-09-13: intake stood at 96,455 while this room's newest
+// record was 96,104. Comparing it with a room seq is a category error, and doing so
+// reported "the referee has passed our registration" for something still in the queue.
+// Keep it for context and never treat it as a position in this room.
 const intakeSeqs = regVerdicts.map(v => v.intake_seq).filter(n => typeof n === 'number');
 const intakeNow = intakeSeqs.length ? Math.max(...intakeSeqs) : null;
 
@@ -120,24 +125,23 @@ out.registration = {
   sent_seq: SENT_SEQ,
   window: { oldest_seq: oldest, oldest_ts: reg.length ? reg[0].ts : null },
   evicted: oldest !== null && SENT_SEQ < oldest,
-  intake_seq: intakeNow,
-  passed_us: intakeNow !== null && intakeNow >= SENT_SEQ,
+  referee_intake_counter: intakeNow,
 };
 
-// A queue countdown only while our record is still in the window and unanswered. An ETA
-// for something the referee has already passed is fiction.
-if (out.registration.posted && !out.registration.receipt && !out.registration.passed_us) {
+// How fast the referee is working, and nothing more. There is deliberately no ETA: our
+// position is a seq in one room, the referee's counter spans thirty-two of them, and
+// subtracting one from the other produced a confident countdown for a registration whose
+// status was in fact unknown. A rate is measurable; a queue position is not.
+if (out.registration.posted && !out.registration.receipt) {
   const withIntake = regVerdicts.filter(v => typeof v.intake_seq === 'number');
   if (withIntake.length > 10) {
     const a = withIntake[Math.max(0, withIntake.length - 200)];
     const b = withIntake[withIntake.length - 1];
     const mins = (Date.parse(b.ts) - Date.parse(a.ts)) / 60000;
-    const rate = mins > 0 ? (b.intake_seq - a.intake_seq) / mins : 0;
-    const behind = out.registration.posted.seq - b.intake_seq;
-    out.registration.queue = {
-      intake_seq: b.intake_seq, ahead_of_us: behind,
-      seq_per_min: Number(rate.toFixed(1)),
-      eta_hours: rate > 0 ? Number((behind / rate / 60).toFixed(1)) : null,
+    out.registration.referee_rate = {
+      intake_per_min: mins > 0 ? Number(((b.intake_seq - a.intake_seq) / mins).toFixed(1)) : null,
+      measured_over_min: Number(mins.toFixed(0)),
+      note: 'intake counter spans all rooms the referee reads; not comparable to a room seq',
     };
   }
 }
@@ -186,8 +190,8 @@ writeFileSync(join(OUT, 'data', 'sonnet-status.json'), JSON.stringify(out, null,
 
 const r = out.registration;
 const regWord = r.receipt ? r.receipt.status
-  : r.queue ? `queued, ${r.queue.ahead_of_us} ahead (~${r.queue.eta_hours}h)`
-  : r.evicted && r.passed_us ? 'handled, receipt aged out of the ring'
+  : r.referee_rate ? `sent, awaiting a receipt (referee ~${r.referee_rate.intake_per_min}/min)`
+  : r.evicted ? 'sent, but our record has aged out of the window — receipt unseen'
   : r.posted ? 'posted, unanswered'
   : 'not in the window';
 console.log(`sonnet ${CONTEST}: ${out.hours_left}h left · registration ${regWord} · ` +
