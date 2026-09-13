@@ -128,22 +128,74 @@ out.registration = {
   referee_intake_counter: intakeNow,
 };
 
-// How fast the referee is working, and nothing more. There is deliberately no ETA: our
-// position is a seq in one room, the referee's counter spans thirty-two of them, and
-// subtracting one from the other produced a confident countdown for a registration whose
-// status was in fact unknown. A rate is measurable; a queue position is not.
-if (out.registration.posted && !out.registration.receipt) {
-  const withIntake = regVerdicts.filter(v => typeof v.intake_seq === 'number');
-  if (withIntake.length > 10) {
-    const a = withIntake[Math.max(0, withIntake.length - 200)];
-    const b = withIntake[withIntake.length - 1];
-    const mins = (Date.parse(b.ts) - Date.parse(a.ts)) / 60000;
-    out.registration.referee_rate = {
-      intake_per_min: mins > 0 ? Number(((b.intake_seq - a.intake_seq) / mins).toFixed(1)) : null,
-      measured_over_min: Number(mins.toFixed(0)),
-      note: 'intake counter spans all rooms the referee reads; not comparable to a room seq',
-    };
-  }
+// Where the referee actually is, on this room's own seq axis.
+//
+// intake_seq cannot answer this: it is the referee's counter across all the rooms it
+// reads, and it ran ahead of this room's newest seq. Comparing the two produced a
+// confident "the referee has passed us" for a registration whose status was unknown.
+//
+// Each receipt names (sender_did, request_id), and the record it answers is in this room
+// with its own seq. Matching them back puts the referee's position on the same axis as
+// our registration, and the post-to-receipt lag says when silence has become an answer.
+const originOf = new Map();
+for (const r of reg) {
+  if (r.from === REFEREE) continue;
+  const j = json(r.text);
+  if (j?.type !== 'sonnet.register.v1' || !j.request_id) continue;
+  const k = r.from + '|' + j.request_id;
+  if (!originOf.has(k)) originOf.set(k, r);
+}
+const answeredAt = new Map();
+for (const v of regVerdicts) {
+  if (!v.sender_did || !v.request_id) continue;
+  const k = v.sender_did + '|' + v.request_id;
+  if (!answeredAt.has(k)) answeredAt.set(k, v);
+}
+const pairs = [];
+for (const [k, v] of answeredAt) {
+  const o = originOf.get(k);
+  if (o) pairs.push({ seq: o.seq, lag_min: (Date.parse(v.ts) - Date.parse(o.ts)) / 60000 });
+}
+if (pairs.length > 20) {
+  const lags = pairs.map(x => x.lag_min).sort((a, b) => a - b);
+  const frontier = Math.max(...pairs.map(x => x.seq));
+  const worst = lags[lags.length - 1];
+  out.registration.frontier = {
+    highest_answered_seq: frontier,
+    matched_pairs: pairs.length,
+    lag_median_min: Number(lags[Math.floor(lags.length * 0.5)].toFixed(1)),
+    lag_p99_min: Number(lags[Math.floor(lags.length * 0.99)].toFixed(1)),
+    lag_max_min: Number(worst.toFixed(0)),
+  };
+  // A record is only "unanswered" once it is older than the worst lag actually seen.
+  // Below that it is merely recent, and calling it dropped would repeat the old mistake
+  // in the other direction.
+  const settledIf = ts => (Date.now() - Date.parse(ts)) / 60000 > worst;
+  const settled = reg.filter(r => {
+    if (r.from === REFEREE) return false;
+    const j = json(r.text);
+    return j?.type === 'sonnet.register.v1' && j.request_id && settledIf(r.ts);
+  });
+  const unanswered = settled.filter(r => {
+    const j = json(r.text);
+    return !answeredAt.has(r.from + '|' + j.request_id);
+  });
+  out.registration.silent_rate = {
+    settled_records: settled.length,
+    without_receipt: unanswered.length,
+    pct: settled.length ? Number((unanswered.length / settled.length * 100).toFixed(1)) : null,
+    note: 'validly signed registrations older than the worst observed lag with no receipt of any kind',
+  };
+  // Our own state, in the only three words that are honest here.
+  const ourRecs = mine.filter(r => json(r.text)?.type === 'sonnet.register.v1');
+  out.registration.ours = ourRecs.map(r => {
+    const j = json(r.text);
+    const v = answeredAt.get(r.from + '|' + j.request_id);
+    return { seq: r.seq, role: j.role ?? null, request_id: j.request_id ?? null,
+             age_min: Math.round((Date.now() - Date.parse(r.ts)) / 60000),
+             state: v ? (v.status ?? 'answered') : settledIf(r.ts) ? 'silent' : 'too recent to call',
+             reason: v?.reason ?? null };
+  });
 }
 
 // Acceptance mix over the surviving window — how selective the identity gate is, not a
@@ -189,8 +241,10 @@ mkdirSync(join(OUT, 'data'), { recursive: true });
 writeFileSync(join(OUT, 'data', 'sonnet-status.json'), JSON.stringify(out, null, 1) + '\n');
 
 const r = out.registration;
+const ourState = (r.ours ?? []).map(o => `${o.role} ${o.state}`).join(', ');
 const regWord = r.receipt ? r.receipt.status
-  : r.referee_rate ? `sent, awaiting a receipt (referee ~${r.referee_rate.intake_per_min}/min)`
+  : ourState
+    ? ourState + (r.silent_rate ? ` — ${r.silent_rate.pct}% of settled registrations get no receipt` : '')
   : r.evicted ? 'sent, but our record has aged out of the window — receipt unseen'
   : r.posted ? 'posted, unanswered'
   : 'not in the window';

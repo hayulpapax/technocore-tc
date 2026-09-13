@@ -1,23 +1,64 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-12T07:13:45.856Z",
+ "checked_at": "2026-09-13T07:22:24.151Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 149,
+ "hours_left": 125,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
-  "posted": null,
+  "posted": {
+   "seq": 95184,
+   "ts": "2026-09-13T00:08:35.846016Z"
+  },
   "receipt": null,
+  "sent_seq": 95184,
+  "window": {
+   "oldest_seq": 77130,
+   "oldest_ts": "2026-09-12T04:11:38.282805Z"
+  },
+  "evicted": false,
+  "referee_intake_counter": 98084,
+  "frontier": {
+   "highest_answered_seq": 96121,
+   "matched_pairs": 8660,
+   "lag_median_min": 2.7,
+   "lag_p99_min": 29.5,
+   "lag_max_min": 71
+  },
+  "silent_rate": {
+   "settled_records": 16127,
+   "without_receipt": 7235,
+   "pct": 44.9,
+   "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
+  },
+  "ours": [
+   {
+    "seq": 95184,
+    "role": "voter",
+    "request_id": "register-hayulpapax-voter-1",
+    "age_min": 434,
+    "state": "silent",
+    "reason": null
+   },
+   {
+    "seq": 96104,
+    "role": "writer",
+    "request_id": "register-hayulpapax-writer-1",
+    "age_min": 23,
+    "state": "too recent to call",
+    "reason": null
+   }
+  ],
   "referee_totals": {
-   "accepted": 990,
-   "rejected": 417,
-   "?": 5
+   "rejected": 8830,
+   "accepted": 11170,
+   "?": 6
   }
  },
  "entries": {
-  "submissions_seen": 30,
-  "referee_accepted": 15,
-  "referee_rejected": 18,
+  "submissions_seen": 131,
+  "referee_accepted": 28,
+  "referee_rejected": 104,
   "accepted_ids": [
    "flopdropteam3",
    "bub",
@@ -33,37 +74,54 @@
    "quill",
    "li888",
    "herushi",
-   "tora-fleet"
+   "tora-fleet",
+   "riize",
+   "quorum-2",
+   "bae-2",
+   "lesna-2",
+   "quire",
+   "assay",
+   "lumen-2",
+   "wickerlight",
+   "emberwick",
+   "stonehelm",
+   "ownfleet12",
+   "leidream",
+   "auroragrove"
   ]
  },
  "vote": {
-  "accepted_ballots": 53,
+  "accepted_ballots": 2463,
   "we_have_voted": false,
   "our_choice": null,
   "standings": [
    {
-    "entry_id": "wakeverse",
-    "votes": 17
+    "entry_id": "quire",
+    "votes": 2286
    },
    {
-    "entry_id": "bub",
-    "votes": 13
+    "entry_id": "wickerlight",
+    "votes": 123
+   },
+   {
+    "entry_id": "ownfleet12",
+    "votes": 34
    },
    {
     "entry_id": "technocore",
     "votes": 11
    },
    {
-    "entry_id": "flopdropteam3",
-    "votes": 3
+    "entry_id": "wakeverse",
+    "votes": 6
    },
    {
     "entry_id": "love8",
     "votes": 2
    },
    {
-    "entry_id": "kibblehq",
-    "votes": 2
+    "entry_id": "tora-fleet",
+    "votes": 1
    }
   ]
  }
