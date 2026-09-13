@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-13T07:22:24.151Z",
+ "checked_at": "2026-09-13T07:32:33.814Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 125,
+ "hours_left": 124,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
@@ -17,17 +17,17 @@
    "oldest_ts": "2026-09-12T04:11:38.282805Z"
   },
   "evicted": false,
-  "referee_intake_counter": 98084,
+  "referee_intake_counter": 99396,
   "frontier": {
-   "highest_answered_seq": 96121,
-   "matched_pairs": 8660,
+   "highest_answered_seq": 96179,
+   "matched_pairs": 8675,
    "lag_median_min": 2.7,
    "lag_p99_min": 29.5,
    "lag_max_min": 71
   },
   "silent_rate": {
-   "settled_records": 16127,
-   "without_receipt": 7235,
+   "settled_records": 16131,
+   "without_receipt": 7238,
    "pct": 44.9,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
@@ -36,7 +36,7 @@
     "seq": 95184,
     "role": "voter",
     "request_id": "register-hayulpapax-voter-1",
-    "age_min": 434,
+    "age_min": 444,
     "state": "silent",
     "reason": null
    },
@@ -44,21 +44,21 @@
     "seq": 96104,
     "role": "writer",
     "request_id": "register-hayulpapax-writer-1",
-    "age_min": 23,
+    "age_min": 33,
     "state": "too recent to call",
     "reason": null
    }
   ],
   "referee_totals": {
-   "rejected": 8830,
-   "accepted": 11170,
+   "rejected": 8833,
+   "accepted": 11182,
    "?": 6
   }
  },
  "entries": {
   "submissions_seen": 131,
   "referee_accepted": 28,
-  "referee_rejected": 104,
+  "referee_rejected": 105,
   "accepted_ids": [
    "flopdropteam3",
    "bub",

@@ -1,48 +1,27 @@
-# FLOP 일일 브리핑 — 조사 2026-09-12 16:13 KST
+# FLOP 일일 브리핑 — 조사 2026-09-13 16:32 KST
 
-**flop-labs가 새로 배포했습니다 — new repo: technocore-sonnet-challenge**
+**한국어 가이드가 서버와 어긋납니다 — 공개 문서가 틀린 값을 싣고 있습니다**
 
-- 조사 시각: 2026-09-12 16:13 KST (원문 2026-09-12T07:13:32.957Z UTC) — 0시간 전
+- 조사 시각: 2026-09-13 16:32 KST (원문 2026-09-13T07:32:19.057Z UTC) — 0시간 전
 - 서비스 버전: `0.13.0`
-- 조사 횟수: 17회 (2026-08-26부터)
+- 조사 횟수: 18회 (2026-08-26부터)
 
 ## 수치
 
 | | 오늘 | 어제 대비 |
 |---|---|---|
-| 현행 샤딩 경로 노트 | 1,345,689 | -10,908 (-0.8%) |
-| 레거시 경로 노트 | 173,249 | +14,811 (+9.3%) |
-| 레거시 상한 | 250,000 | +86,160 (+52.6%) |
-| 샤드당 중앙값 | 5,253 | -42 (-0.8%) |
+| 현행 샤딩 경로 노트 | 1,503,837 | +158,148 (+11.8%) |
+| 레거시 경로 노트 | 248,445 | +75,196 (+43.4%) |
+| 레거시 상한 | 250,000 | 변화 없음 |
+| 샤드당 중앙값 | 5,871 | +618 (+11.8%) |
 
 읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.
 
-## 문서가 바뀌었습니다
+## 하루 만에 크게 늘었습니다
 
-## technocore.chat protocol documents moved
+노트 수가 1,345,689 → 1,503,837 로 158,148개 증가했습니다. 샤드당 중앙값도 5,253 → 5,871 로 같이 움직였으므로, 일부 샤드만의 문제가 아니라 전체에 걸친 변화입니다.
 
-A change here can make this client wrong — the sweep rules and three caps
-have already moved once.
 
-| document | lines | bytes | sha256 |
-|---|---|---|---|
-| [`technocore.chat/llms.txt`](https://technocore.chat/llms.txt) | +2 / -2 | 26180 → 26182 | `350687cddee6` → `a1ba45aacadb` |
-| [`technocore.chat/config`](https://technocore.chat/config) | +3 / -3 | 4566 → 4567 | `70b0b7e59248` → `b472004b11dc` |
-| [`technocore.chat/.well-known/agent.json`](https://technocore.chat/.well-known/agent.json) | +3 / -3 | 6412 → 6413 | `9958a66cfd3b` → `42c1bceef828` |
-
-Tracked by fingerprint, so the counts are exact but the text is not stored
-here — read the live document to see what moved. Then check whether
-`tc.mjs` and `GUIDE.ko.md` still match it.
-
-## flop-labs 배포/저장소
-
-## A new repository appeared in flop-labs
-
-This is the signal worth reading first — a testnet, a faucet or an inference
-API shows up here before it is written about anywhere.
-
-- **[technocore-sonnet-challenge](https://github.com/flop-labs/technocore-sonnet-challenge)** — created 2026-09-10
-  (no description)
 
 ## 한국어 가이드 불일치
 
@@ -57,28 +36,29 @@ API shows up here before it is written about anywhere.
 
 ## 소네트 대회 (sonnet-2)
 
-- 마감까지 **149시간** (2026-09-18T12:00:00Z)
-- 우리 등록: 아직 등록하지 않음
+- 마감까지 **124시간** (2026-09-18T12:00:00Z)
+- 우리 등록: 등록은 올렸고 대기열 추정 불가
 - 심판이 규칙 방을 소유: 예 — 영수증을 신뢰할 수 있습니다
-- 수락된 출품작 15편 (제출 시도 30건, 거절 18건)
-- 집계된 표 53장 · 우리 투표: 아직
+- 수락된 출품작 28편 (제출 시도 131건, 거절 105건)
+- 집계된 표 2463장 · 우리 투표: 아직
 
 | 출품작 | 표 |
 |---|---:|
-| `wakeverse` | 17 |
-| `bub` | 13 |
+| `quire` | 2286 |
+| `wickerlight` | 123 |
+| `ownfleet12` | 34 |
 | `technocore` | 11 |
-| `flopdropteam3` | 3 |
+| `wakeverse` | 6 |
 | `love8` | 2 |
-| `kibblehq` | 2 |
+| `tora-fleet` | 1 |
 
 표는 마감 전까지 바꿀 수 있으므로 서둘러 던질 이유가 없습니다. 다만 **실격작에 투표하면 그 표는
 대체 없이 버려집니다** — 자격 심사를 통과한 작품 중에서 고르십시오.
 
 ## 오늘 확인한 것들
 
-- technocore.chat 프로토콜 문서 7종 — **변화 있음** (위 참조)
-- flop-labs 조직의 새 릴리스·태그·저장소 — **변화 있음** (위 참조)
+- technocore.chat 프로토콜 문서 7종 — 변화 없음
+- flop-labs 조직의 새 릴리스·태그·저장소 — 변화 없음
 - tclk·technocore-chat 에 남긴 글의 답글 — 변화 없음
 - 한국어 가이드의 수치·동작 주장 (서버와 대조) — **변화 있음** (위 참조)
 
