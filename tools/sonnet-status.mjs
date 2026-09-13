@@ -34,7 +34,11 @@ const DEADLINE = process.env.SONNET_DEADLINE || '2026-09-18T12:00:00Z';
 // moved past 77,000 within a day. Once the message ages out of every read this constant
 // is the only handle left on it, and without it this tool reports "not posted" for a
 // record the referee has already handled.
-const SENT_SEQ = Number(process.env.SONNET_SENT_SEQ) || 21611;
+// 95,184 is the re-post: the rules' own recovery for a lost receipt is an identical
+// retry under the same request_id, which "returns its original receipt without appending
+// or changing vote order". The first attempt, seq 21,611, was handled and its receipt
+// expired unseen.
+const SENT_SEQ = Number(process.env.SONNET_SENT_SEQ) || 95184;
 
 const REG   = `mb-${CONTEST}-registration`;
 const SUB   = `mb-${CONTEST}-submissions`;
