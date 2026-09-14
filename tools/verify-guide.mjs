@@ -54,6 +54,19 @@ const SOURCES = {
 };
 const UNCHECKABLE = new Set(['방 링 버퍼']);   // prose, not a single figure
 
+/* Boundary words, checked separately from the numbers.
+   Matching the figure is not the same as matching the comparison around it: the
+   duplicate-exemption row carried the right number, 16, under the wrong inequality
+   ("미만", under) when /config says "at or under". A numeric check cannot see that,
+   so each row whose meaning depends on an inclusive bound names the word it must use. */
+const BOUNDARY_WORDS = {
+  '중복 면제 길이': {
+    want: '이하',
+    wrong: '미만',
+    why: '/config: dupe_min_length, "a text at or under this length is never refused"',
+  },
+};
+
 const tableStart = GUIDE.indexOf('### 현재 인스턴스가 실제로 강제하는 값');
 if (tableStart < 0) throw new Error('the limits section is gone — this checker needs updating');
 const tableEnd = GUIDE.indexOf('###', tableStart + 10);
@@ -84,6 +97,15 @@ for (const row of rows) {
   const actual = src();
   const ok = claimed !== null && actual !== undefined && Number(claimed) === Number(actual);
   check(`표: ${label}`, ok, ok ? `${claimed}` : `가이드 ${claimed} / 서버 ${actual}`);
+
+  const bound = BOUNDARY_WORDS[label];
+  if (bound) {
+    const wrong = cells[1].includes(bound.wrong);
+    const right = cells[1].includes(bound.want);
+    check(`표: ${label} — 경계 표현`, right && !wrong,
+      right && !wrong ? bound.want
+        : `${bound.wrong} 으로 적혀 있음 — ${bound.why}`);
+  }
 }
 
 /* ---- 2. endpoints the guide's API table names ------------------------------------ */
