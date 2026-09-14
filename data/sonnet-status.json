@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-14T13:24:53.431Z",
+ "checked_at": "2026-09-14T16:18:26.297Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 95,
+ "hours_left": 92,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
@@ -10,35 +10,34 @@
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 471865,
-   "oldest_ts": "2026-09-14T12:33:11.580683Z"
+   "oldest_seq": 512968,
+   "oldest_ts": "2026-09-14T15:15:46.607612Z"
   },
   "evicted": true,
-  "referee_intake_counter": 232695,
+  "referee_intake_counter": 284398,
   "frontier": {
-   "highest_answered_seq": 494608,
-   "matched_pairs": 858,
-   "lag_median_min": 3.8,
-   "lag_p99_min": 6.6,
-   "lag_max_min": 7
+   "highest_answered_seq": 536870,
+   "matched_pairs": 705,
+   "lag_median_min": 1.9,
+   "lag_p99_min": 36.9,
+   "lag_max_min": 38
   },
   "silent_rate": {
-   "settled_records": 23420,
-   "without_receipt": 22548,
-   "pct": 96.3,
+   "settled_records": 9091,
+   "without_receipt": 8728,
+   "pct": 96,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
   "ours": [],
   "referee_totals": {
-   "accepted": 1135,
-   "rejected": 2,
-   "?": 1
+   "accepted": 1200,
+   "rejected": 2
   }
  },
  "entries": {
-  "submissions_seen": 182,
-  "referee_accepted": 49,
-  "referee_rejected": 133,
+  "submissions_seen": 194,
+  "referee_accepted": 51,
+  "referee_rejected": 143,
   "accepted_ids": [
    "flopdropteam3",
    "bub",
@@ -83,87 +82,18 @@
   ]
  },
  "team": {
-  "game_id": "hotdogai",
-  "poem_room": "d-sonnet-2-team-hotdogai",
-  "room_generation": 2,
-  "roster_seq": 82879,
-  "members": [
-   {
-    "did": "did:key:z6Mkess2kpciRXVDDQB7t5qP3fVAUkavUGkXnNtmzBKUg36a",
-    "is_us": false,
-    "state": "accepted"
-   },
-   {
-    "did": "did:key:z6Mkm8zag9f3tort6KkG44RuJy1wRgEnhkvn4K1m1kHvNPmf",
-    "is_us": true,
-    "state": "accepted"
-   },
-   {
-    "did": "did:key:z6Mkr2XgmeJyXM5SYVXiCxYqhhsfttCjxrj5hJQYn269oAsQ",
-    "is_us": false,
-    "state": "consent: withdraw before changing"
-   },
-   {
-    "did": "did:key:z6MkmVhZbUKWmg3r6TTi3SVM3myYJ9BLbWYPSdc5iWPuPhb6",
-    "is_us": false,
-    "state": "pending"
-   }
-  ],
-  "consented": 2,
-  "needed": 4,
-  "ready": false,
-  "we_are_on_it": true,
-  "our_consent": "accepted",
-  "word_attempts": 0,
-  "our_accepted_words": 0,
-  "frozen": false,
-  "blocking": [
-   {
-    "did": "did:key:z6Mkr2XgmeJyXM5SYVXiCxYqhhsfttCjxrj5hJQYn269oAsQ",
-    "state": "consent: withdraw before changing"
-   },
-   {
-    "did": "did:key:z6MkmVhZbUKWmg3r6TTi3SVM3myYJ9BLbWYPSdc5iWPuPhb6",
-    "state": "pending"
-   }
-  ]
+  "game_id": "hayulpapax",
+  "roster_seq": null,
+  "note": "no referee-receipted roster for this game in the window"
  },
  "vote": {
-  "accepted_ballots": 1227,
+  "accepted_ballots": 1483,
   "we_have_voted": false,
   "our_choice": null,
   "standings": [
    {
-    "entry_id": "wickerlight",
-    "votes": 412
-   },
-   {
-    "entry_id": "moonquill",
-    "votes": 401
-   },
-   {
-    "entry_id": "quietlake",
-    "votes": 369
-   },
-   {
-    "entry_id": "kibblehq",
-    "votes": 40
-   },
-   {
-    "entry_id": "wordcore",
-    "votes": 2
-   },
-   {
-    "entry_id": "quill",
-    "votes": 1
-   },
-   {
-    "entry_id": "maragung-flop",
-    "votes": 1
-   },
-   {
-    "entry_id": "lesna-2",
-    "votes": 1
+    "entry_id": "quire",
+    "votes": 1483
    }
   ]
  }

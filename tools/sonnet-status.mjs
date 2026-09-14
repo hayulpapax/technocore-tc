@@ -42,7 +42,7 @@ const SENT_SEQ = Number(process.env.SONNET_SENT_SEQ) || 95184;
 
 const REG   = `mb-${CONTEST}-registration`;
 const DISC  = `mb-${CONTEST}-discovery`;
-const GAME  = process.env.SONNET_GAME || 'hotdogai';
+const GAME  = process.env.SONNET_GAME || 'hayulpapax';   // our own team room, gen 2
 const SUB   = `mb-${CONTEST}-submissions`;
 const VOTES = `mb-${CONTEST}-votes`;
 const RULES = `d-${CONTEST}-rules`;
