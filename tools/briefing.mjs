@@ -256,6 +256,36 @@ if (sonnet) {
     `- 심판이 규칙 방을 소유: ${sonnet.referee_owns_rules ? '예 — 영수증을 신뢰할 수 있습니다' : '**아니오 — 이 대회의 영수증은 증거가 아닙니다**'}`,
     `- 수락된 출품작 ${sonnet.entries?.referee_accepted ?? 0}편 (제출 시도 ${sonnet.entries?.submissions_seen ?? 0}건, 거절 ${sonnet.entries?.referee_rejected ?? 0}건)`,
     `- 집계된 표 ${v.accepted_ballots ?? 0}장 · 우리 투표: ${v.we_have_voted ? `완료 (${v.our_choice})` : sonnet.role && !sonnet.role.can_vote ? '**불가 — 우리 역할로는 투표권이 없습니다**' : '아직'}`,
+    '',
+  );
+
+  // The team is the whole game for a writer, and it turns over hour to hour: a roster is
+  // replaced, every consent is voided by any change to the members list, and the first
+  // accepted word freezes it for good. A briefing that reports only the role leaves the
+  // reader unable to tell whether their poem can still start.
+  const t = sonnet.team;
+  if (t && t.roster_seq) {
+    const short = d => String(d).slice(9, 21) + '…';
+    out.push(
+      '### 우리 팀 ' + t.game_id, '',
+      '- 명단: discovery seq ' + t.roster_seq + ' · 방 ' + t.poem_room + ' · generation ' + t.room_generation,
+      '- 합의: **' + t.consented + '/' + t.needed + '**' + (t.ready ? ' — **전원 합의 완료, 집필 가능**' : ' — 아직 시작할 수 없습니다'),
+      '- 우리 자리: ' + (t.we_are_on_it ? '명단에 있음' : '**명단에서 빠졌습니다**') + ' · 우리 합의: **' + t.our_consent + '**',
+      '- 시 진행: 단어 시도 ' + t.word_attempts + '건' + (t.frozen ? ' · **명단 동결됨 — 더는 교체 불가**' : ' · 아직 동결 전이라 탈퇴 가능'),
+      '');
+    if (t.frozen && t.our_accepted_words === 0) out.push(
+      '> ⚠️ **시가 시작됐는데 우리 단어가 0개입니다.** 동결된 명단의 모든 구성원이 최소 한 단어를 인정받아야 시가 자격을 얻습니다 — 우리가 못 넣으면 팀 전체가 탈락합니다.', '');
+    if (t.blocking && t.blocking.length) {
+      out.push('막고 있는 자리:', '', '| DID | 상태 |', '|---|---|');
+      for (const b of t.blocking) out.push('| ' + short(b.did) + ' | ' + b.state + ' |');
+      out.push('');
+    }
+  } else if (t) {
+    out.push('### 우리 팀 ' + t.game_id, '',
+      '- **심판이 수락한 명단이 창에 없습니다.** 팀이 해체됐거나 명단이 링에서 밀려났습니다.', '');
+  }
+
+  out.push(
     '');
   if (v.standings?.length) {
     out.push('| 출품작 | 표 |', '|---|---:|',

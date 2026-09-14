@@ -41,6 +41,8 @@ const DEADLINE = process.env.SONNET_DEADLINE || '2026-09-18T12:00:00Z';
 const SENT_SEQ = Number(process.env.SONNET_SENT_SEQ) || 95184;
 
 const REG   = `mb-${CONTEST}-registration`;
+const DISC  = `mb-${CONTEST}-discovery`;
+const GAME  = process.env.SONNET_GAME || 'hotdogai';
 const SUB   = `mb-${CONTEST}-submissions`;
 const VOTES = `mb-${CONTEST}-votes`;
 const RULES = `d-${CONTEST}-rules`;
@@ -248,6 +250,83 @@ if (ourVerdicts.length) {
            : /evidence required/i.test(reason) ? 'identity not in the referee eligible set'
            : 'unclear',
   };
+}
+
+/* ---- our team, and whether it can start ------------------------------------------- */
+// A roster is only current if the REFEREE RECEIPTED it. Any member can post a roster
+// record, and an identical replay of an old one under its original request_id returns
+// that original receipt and changes nothing — but it sits in the room looking live.
+// Reading "last posted" cost this account an accepted consent it still held: we withdrew
+// from a seat that was never actually taken away. So match every roster to its receipt,
+// and discard one whose receipt predates it.
+const disc = await exportRoom(DISC);
+const seen = new Map();
+for (const r of disc) {
+  if (r.from !== REFEREE) continue;
+  const j = json(r.text);
+  if (!j) continue;
+  const list = Array.isArray(j.receipts) ? j.receipts : [j];
+  for (const e of list) {
+    const sd = e.sender_did ?? j.sender_did, rid = e.request_id ?? j.request_id;
+    if (!sd || !rid) continue;
+    const k = sd + '|' + rid;
+    if (!seen.has(k)) seen.set(k, { status: j.status ?? e.status, reason: (j.reason ?? e.reason) || '', seq: r.seq });
+  }
+}
+const receipted = r => {
+  const j = json(r.text);
+  if (!j?.request_id) return null;
+  const v = seen.get(r.from + '|' + j.request_id);
+  if (!v || !/acc/i.test(v.status ?? '')) return null;
+  if (v.seq < r.seq) return null;                 // receipt older than the record: a replay
+  return j;
+};
+
+let roster = null, rosterSeq = null;
+for (const r of disc) {
+  const j = json(r.text);
+  if (j?.type !== 'sonnet.roster.v1' || j.game_id !== GAME) continue;
+  if (!receipted(r)) continue;
+  roster = j; rosterSeq = r.seq;
+}
+
+if (roster) {
+  const members = roster.members ?? [];
+  const state = members.map(m => {
+    let st = 'pending';
+    for (const r of disc) {
+      const j = json(r.text);
+      if (j?.type !== 'sonnet.roster.v1' || j.game_id !== GAME || r.from !== m) continue;
+      if (JSON.stringify(j.members) !== JSON.stringify(members)) continue;
+      const v = seen.get(r.from + '|' + j.request_id);
+      if (v) st = /acc/i.test(v.status ?? '') ? 'accepted' : (v.reason || 'rejected');
+    }
+    return { did: m, is_us: m === ME, state: st };
+  });
+  const consented = state.filter(x => x.state === 'accepted').length;
+  // Has the poem started? The first accepted word freezes the roster for good.
+  const poem = await exportRoom(roster.poem_room ?? `d-${CONTEST}-team-${GAME}`);
+  const words = poem.filter(r => json(r.text)?.type === 'sonnet.word.v1').length;
+  const ourWords = poem.filter(r => r.from === REFEREE && json(r.text)?.sender_did === ME
+                                    && /acc/i.test(json(r.text)?.status ?? '')).length;
+  out.team = {
+    game_id: GAME,
+    poem_room: roster.poem_room ?? null,
+    room_generation: roster.room_generation ?? null,
+    roster_seq: rosterSeq,
+    members: state,
+    consented,
+    needed: members.length,
+    ready: consented === members.length,
+    we_are_on_it: members.includes(ME),
+    our_consent: state.find(x => x.is_us)?.state ?? 'not on the roster',
+    word_attempts: words,
+    our_accepted_words: ourWords,
+    frozen: words > 0,
+    blocking: state.filter(x => x.state !== 'accepted').map(x => ({ did: x.did, state: x.state })),
+  };
+} else {
+  out.team = { game_id: GAME, roster_seq: null, note: 'no referee-receipted roster for this game in the window' };
 }
 
 /* ---- the vote ---------------------------------------------------------------------- */
