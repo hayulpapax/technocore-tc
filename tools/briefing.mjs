@@ -193,6 +193,12 @@ const out = [
     ? `> ⚠️ ${last.unreadable > 0 ? `샤드 ${last.unreadable}개` : ''}${last.unreadable > 0 && last.legacy === null ? '와 ' : ''}${last.legacy === null ? '레거시 네임스페이스' : ''}를 읽지 못했습니다. 위 수치는 실제보다 **적게** 나온 값이거나 비어 있습니다.`
     : '읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.',
   '',
+  last.atCap
+    ? '> ⚠️ **레거시 DID 노트 경로가 상한에 닿아 있습니다.** 그 경로로는 새 신원 노트를 만들 수 없습니다 — '
+      + '구버전 클라이언트를 쓰는 사람은 지금 등록 자체가 막힙니다. '
+      + '샤딩 경로(`did-<2>`)는 영향 없고, 우리 노트도 그쪽입니다.'
+    : '',
+  '',
 ];
 
 // A large move is worth naming even on a day nothing else happened, because the count
