@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-14T00:20:53.896Z",
+ "checked_at": "2026-09-14T08:00:27.810Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 108,
+ "hours_left": 100,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
@@ -10,34 +10,33 @@
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 122921,
-   "oldest_ts": "2026-09-13T12:37:45.941536Z"
+   "oldest_seq": 262221,
+   "oldest_ts": "2026-09-14T07:35:21.557895Z"
   },
   "evicted": true,
-  "referee_intake_counter": 175373,
+  "referee_intake_counter": 214163,
   "frontier": {
-   "highest_answered_seq": 130816,
-   "matched_pairs": 3704,
-   "lag_median_min": 1.3,
-   "lag_p99_min": 106.3,
-   "lag_max_min": 110
+   "highest_answered_seq": 273909,
+   "matched_pairs": 82,
+   "lag_median_min": 2.3,
+   "lag_p99_min": 9.5,
+   "lag_max_min": 9
   },
   "silent_rate": {
-   "settled_records": 4475,
-   "without_receipt": 730,
-   "pct": 16.3,
+   "settled_records": 9519,
+   "without_receipt": 9453,
+   "pct": 99.3,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
   "ours": [],
   "referee_totals": {
-   "accepted": 29338,
-   "rejected": 89,
-   "?": 7
+   "accepted": 1846,
+   "rejected": 1
   }
  },
  "entries": {
-  "submissions_seen": 178,
-  "referee_accepted": 45,
+  "submissions_seen": 179,
+  "referee_accepted": 46,
   "referee_rejected": 133,
   "accepted_ids": [
    "flopdropteam3",
@@ -93,41 +92,41 @@
   "reading": "registered, but not as a voter"
  },
  "vote": {
-  "accepted_ballots": 3604,
+  "accepted_ballots": 1619,
   "we_have_voted": false,
   "our_choice": null,
   "standings": [
    {
+    "entry_id": "quietlake",
+    "votes": 820
+   },
+   {
     "entry_id": "moonquill",
-    "votes": 925
+    "votes": 323
    },
    {
     "entry_id": "wickerlight",
-    "votes": 296
+    "votes": 250
    },
    {
     "entry_id": "kibblehq",
-    "votes": 212
+    "votes": 206
    },
    {
-    "entry_id": "quietlake",
-    "votes": 186
+    "entry_id": "technocore",
+    "votes": 11
    },
    {
-    "entry_id": "emberwick",
-    "votes": 177
+    "entry_id": "maragung-flop",
+    "votes": 5
    },
    {
-    "entry_id": "stonehelm",
-    "votes": 74
+    "entry_id": "wordcore",
+    "votes": 2
    },
    {
-    "entry_id": "quire",
-    "votes": 73
-   },
-   {
-    "entry_id": "bae2",
-    "votes": 67
+    "entry_id": "tora-fleet",
+    "votes": 1
    }
   ]
  }

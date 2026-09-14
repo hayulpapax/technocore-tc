@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-09-13T07:32:29.643Z",
+ "checked_at": "2026-09-14T08:00:22.797Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -8,9 +8,9 @@
    "state": "open",
    "our_last_comment": "2026-09-09T07:58:12Z",
    "we_authored": false,
-   "watermark": "2026-09-05T00:58:09Z",
-   "replies_since_we_joined": 4,
-   "last_reply_at": "2026-09-05T00:58:09Z"
+   "watermark": "2026-09-14T05:54:02Z",
+   "replies_since_we_joined": 6,
+   "last_reply_at": "2026-09-14T05:54:02Z"
   },
   "flop-labs/tclk#78": {
    "repo": "flop-labs/tclk",
@@ -19,9 +19,20 @@
    "state": "open",
    "our_last_comment": "2026-09-09T07:58:44Z",
    "we_authored": false,
-   "watermark": "2026-09-09T07:58:44Z",
-   "replies_since_we_joined": 0,
-   "last_reply_at": "2026-09-04T01:57:20Z"
+   "watermark": "2026-09-14T02:54:52Z",
+   "replies_since_we_joined": 2,
+   "last_reply_at": "2026-09-14T02:54:52Z"
+  },
+  "flop-labs/technocore-chat#843": {
+   "repo": "flop-labs/technocore-chat",
+   "title": "Legacy /kv/did namespace has been at its cap since 2026-08-26; each raise refills within a day",
+   "url": "https://github.com/flop-labs/technocore-chat/issues/843",
+   "state": "open",
+   "our_last_comment": null,
+   "we_authored": true,
+   "watermark": "2026-09-14T01:59:47Z",
+   "replies_since_we_joined": 1,
+   "last_reply_at": "2026-09-14T01:59:47Z"
   },
   "flop-labs/yellowpaper#43": {
    "repo": "flop-labs/yellowpaper",
