@@ -1,6 +1,6 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-14T13:22:55.168Z",
+ "checked_at": "2026-09-14T13:24:53.431Z",
  "deadline": "2026-09-18T12:00:00Z",
  "hours_left": 95,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
@@ -23,8 +23,8 @@
    "lag_max_min": 7
   },
   "silent_rate": {
-   "settled_records": 22497,
-   "without_receipt": 21663,
+   "settled_records": 23420,
+   "without_receipt": 22548,
    "pct": 96.3,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
