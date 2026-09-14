@@ -225,13 +225,23 @@ if (guideOff) {
 if (sonnet) {
   const r = sonnet.registration ?? {};
   const v = sonnet.vote ?? {};
-  const line = r.receipt
-    ? `**${/acc/i.test(r.receipt.status) ? '수락됨' : '거절됨'}** (${r.receipt.ts?.slice(11, 19)}Z)` +
-      (r.receipt.reason ? ` — ${r.receipt.reason}` : '')
-    : r.queue
-    ? `심판 대기열 — 앞에 ${r.queue.ahead_of_us.toLocaleString()}건, ` +
-      `분당 ${r.queue.seq_per_min}건 처리, 약 ${r.queue.eta_hours}시간 뒤 예상`
-    : r.posted ? '등록은 올렸고 대기열 추정 불가' : '아직 등록하지 않음';
+  // The registration room turns over in hours and both of our registration records have
+  // aged out of it, so registration.posted goes null and the old text read
+  // '아직 등록하지 않음' for an account the referee has on file. A ballot receipt
+  // outlives that ring and states the role directly, so prefer it when there is one.
+  const role = sonnet.role;
+  const line = role
+    ? (role.can_vote
+        ? '**투표자로 등록됨** — 표를 던질 수 있습니다'
+        : role.registered
+          ? '**' + role.reading + '** — 심판 판정 "' + role.reason + '" (' + String(role.ts).slice(11, 19) + 'Z)'
+          : '**자격 집합에 없음** — "' + role.reason + '"')
+      + '  ·  근거: ' + role.evidence
+    : r.receipt
+    ? '**' + (/acc/i.test(r.receipt.status) ? '수락됨' : '거절됨') + '** (' + String(r.receipt.ts).slice(11, 19) + 'Z)'
+      + (r.receipt.reason ? ' — ' + r.receipt.reason : '')
+    : r.posted ? '등록은 올렸고 판정 대기'
+    : '등록 기록이 링에서 밀려남 — 이 방으로는 확인 불가';
 
   out.push(
     `## 소네트 대회 (${sonnet.contest})`, '',
@@ -239,7 +249,7 @@ if (sonnet) {
     `- 우리 등록: ${line}`,
     `- 심판이 규칙 방을 소유: ${sonnet.referee_owns_rules ? '예 — 영수증을 신뢰할 수 있습니다' : '**아니오 — 이 대회의 영수증은 증거가 아닙니다**'}`,
     `- 수락된 출품작 ${sonnet.entries?.referee_accepted ?? 0}편 (제출 시도 ${sonnet.entries?.submissions_seen ?? 0}건, 거절 ${sonnet.entries?.referee_rejected ?? 0}건)`,
-    `- 집계된 표 ${v.accepted_ballots ?? 0}장 · 우리 투표: ${v.we_have_voted ? `완료 (${v.our_choice})` : '아직'}`,
+    `- 집계된 표 ${v.accepted_ballots ?? 0}장 · 우리 투표: ${v.we_have_voted ? `완료 (${v.our_choice})` : sonnet.role && !sonnet.role.can_vote ? '**불가 — 우리 역할로는 투표권이 없습니다**' : '아직'}`,
     '');
   if (v.standings?.length) {
     out.push('| 출품작 | 표 |', '|---|---:|',

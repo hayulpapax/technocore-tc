@@ -216,6 +216,40 @@ out.entries = {
   accepted_ids: [...acceptedEntries].slice(0, 40),
 };
 
+/* ---- what role the referee thinks we have ------------------------------------------ */
+// The registration room is a ring that turns over in hours, and both of our registration
+// records have aged out of it. Their receipts went with them, so "are we registered, and
+// as what?" cannot be answered there any more.
+//
+// A ballot answers it instead, because the referee judges every ballot against the role it
+// has on file and says so:
+//   accepted             -> we are a voter
+//   voter: role/room     -> we are registered, but not as a voter
+//   voter: ... evidence  -> our identity is not in the eligible set at all
+// Measured 2026-09-13: of the DIDs in the votes window, 1,350 got role/room and 3,604 were
+// accepted, with zero DIDs in both. The two are a clean partition, so role/room is a
+// statement about the role, not a transient error.
+const voteRows = await exportRoom(VOTES);
+const ourVerdicts = voteRows.filter(r => r.from === REFEREE).flatMap(verdicts)
+                            .filter(v => v.sender_did === ME);
+if (ourVerdicts.length) {
+  const last = ourVerdicts[ourVerdicts.length - 1];
+  const reason = last.reason ?? '';
+  out.role = {
+    evidence: 'ballot receipt',
+    request_id: last.request_id ?? null,
+    status: last.status ?? null,
+    reason: reason || null,
+    ts: last.ts,
+    registered: !/evidence required/i.test(reason),
+    can_vote: /acc/i.test(last.status ?? ''),
+    reading: /acc/i.test(last.status ?? '') ? 'voter'
+           : /role[/]room/.test(reason) ? 'registered, but not as a voter'
+           : /evidence required/i.test(reason) ? 'identity not in the referee eligible set'
+           : 'unclear',
+  };
+}
+
 /* ---- the vote ---------------------------------------------------------------------- */
 // Only ballots the referee accepted count, and only the last one from each voter.
 const votes = await exportRoom(VOTES);
@@ -241,7 +275,7 @@ mkdirSync(join(OUT, 'data'), { recursive: true });
 writeFileSync(join(OUT, 'data', 'sonnet-status.json'), JSON.stringify(out, null, 1) + '\n');
 
 const r = out.registration;
-const ourState = (r.ours ?? []).map(o => `${o.role} ${o.state}`).join(', ');
+const ourState = out.role ? `role: ${out.role.reading}` : (r.ours ?? []).map(o => `${o.role} ${o.state}`).join(', ');
 const regWord = r.receipt ? r.receipt.status
   : ourState
     ? ourState + (r.silent_rate ? ` — ${r.silent_rate.pct}% of settled registrations get no receipt` : '')

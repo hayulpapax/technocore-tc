@@ -1,64 +1,44 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-13T07:32:33.814Z",
+ "checked_at": "2026-09-14T00:20:53.896Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 124,
+ "hours_left": 108,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
-  "posted": {
-   "seq": 95184,
-   "ts": "2026-09-13T00:08:35.846016Z"
-  },
+  "posted": null,
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 77130,
-   "oldest_ts": "2026-09-12T04:11:38.282805Z"
+   "oldest_seq": 122921,
+   "oldest_ts": "2026-09-13T12:37:45.941536Z"
   },
-  "evicted": false,
-  "referee_intake_counter": 99396,
+  "evicted": true,
+  "referee_intake_counter": 175373,
   "frontier": {
-   "highest_answered_seq": 96179,
-   "matched_pairs": 8675,
-   "lag_median_min": 2.7,
-   "lag_p99_min": 29.5,
-   "lag_max_min": 71
+   "highest_answered_seq": 130816,
+   "matched_pairs": 3704,
+   "lag_median_min": 1.3,
+   "lag_p99_min": 106.3,
+   "lag_max_min": 110
   },
   "silent_rate": {
-   "settled_records": 16131,
-   "without_receipt": 7238,
-   "pct": 44.9,
+   "settled_records": 4475,
+   "without_receipt": 730,
+   "pct": 16.3,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
-  "ours": [
-   {
-    "seq": 95184,
-    "role": "voter",
-    "request_id": "register-hayulpapax-voter-1",
-    "age_min": 444,
-    "state": "silent",
-    "reason": null
-   },
-   {
-    "seq": 96104,
-    "role": "writer",
-    "request_id": "register-hayulpapax-writer-1",
-    "age_min": 33,
-    "state": "too recent to call",
-    "reason": null
-   }
-  ],
+  "ours": [],
   "referee_totals": {
-   "rejected": 8833,
-   "accepted": 11182,
-   "?": 6
+   "accepted": 29338,
+   "rejected": 89,
+   "?": 7
   }
  },
  "entries": {
-  "submissions_seen": 131,
-  "referee_accepted": 28,
-  "referee_rejected": 105,
+  "submissions_seen": 178,
+  "referee_accepted": 45,
+  "referee_rejected": 133,
   "accepted_ids": [
    "flopdropteam3",
    "bub",
@@ -87,41 +67,67 @@
    "stonehelm",
    "ownfleet12",
    "leidream",
-   "auroragrove"
+   "auroragrove",
+   "zfleet5",
+   "bae2",
+   "celestialcove",
+   "wordcore",
+   "harborkeep",
+   "kulonson2",
+   "shultz3",
+   "jinken",
+   "ponyo",
+   "signed",
+   "moonquill",
+   "triples24"
   ]
  },
+ "role": {
+  "evidence": "ballot receipt",
+  "request_id": "ballot-hayulpapax-probe-1",
+  "status": "rejected",
+  "reason": "voter: role/room",
+  "ts": "2026-09-13T23:57:15.071271Z",
+  "registered": true,
+  "can_vote": false,
+  "reading": "registered, but not as a voter"
+ },
  "vote": {
-  "accepted_ballots": 2463,
+  "accepted_ballots": 3604,
   "we_have_voted": false,
   "our_choice": null,
   "standings": [
    {
-    "entry_id": "quire",
-    "votes": 2286
+    "entry_id": "moonquill",
+    "votes": 925
    },
    {
     "entry_id": "wickerlight",
-    "votes": 123
+    "votes": 296
    },
    {
-    "entry_id": "ownfleet12",
-    "votes": 34
+    "entry_id": "kibblehq",
+    "votes": 212
    },
    {
-    "entry_id": "technocore",
-    "votes": 11
+    "entry_id": "quietlake",
+    "votes": 186
    },
    {
-    "entry_id": "wakeverse",
-    "votes": 6
+    "entry_id": "emberwick",
+    "votes": 177
    },
    {
-    "entry_id": "love8",
-    "votes": 2
+    "entry_id": "stonehelm",
+    "votes": 74
    },
    {
-    "entry_id": "tora-fleet",
-    "votes": 1
+    "entry_id": "quire",
+    "votes": 73
+   },
+   {
+    "entry_id": "bae2",
+    "votes": 67
    }
   ]
  }
