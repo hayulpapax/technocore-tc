@@ -103,9 +103,12 @@ const WATCHES = [
   { key: 'TCLK',     news: 'TCLK_REPLIED',   label: 'tclk·technocore-chat 에 남긴 글의 답글' },
   { key: 'GUIDE',    news: 'GUIDE_DRIFTED',  label: '한국어 가이드의 수치·동작 주장 (서버와 대조)' },
 ];
+// Did this invocation come from the workflow at all? CI sets every *_RAN input, even
+// when a watcher failed and the value is empty. A hand-run regeneration sets none.
+const fromCI = WATCHES.some(w => `${w.key}_RAN` in process.env);
 for (const w of WATCHES) { w.ran = on(`${w.key}_RAN`); w.found = w.ran && on(w.news); }
 const watch = key => WATCHES.find(w => w.key === key);
-const notRun = WATCHES.filter(w => !w.ran);
+const notRun = fromCI ? WATCHES.filter(w => !w.ran) : [];
 
 const drift    = watch('DRIFT').found;
 const project  = drift && on('DRIFT_PROJECT');
@@ -301,7 +304,8 @@ if (sonnet) {
 // crashed watcher is still a day the reader has to be told about the crash.
 out.push('## 오늘 확인한 것들', '');
 for (const w of WATCHES) {
-  out.push(`- ${w.label} — ${!w.ran ? '**확인 못 함 (감시 실행 실패)**' : w.found ? '**변화 있음** (위 참조)' : '변화 없음'}`);
+  out.push(`- ${w.label} — ${w.ran ? (w.found ? '**변화 있음** (위 참조)' : '변화 없음')
+    : fromCI ? '**확인 못 함 (감시 실행 실패)**' : '이번 재생성에서는 돌지 않음'}`);
 }
 out.push('');
 if (quiet) {
