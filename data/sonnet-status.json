@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-14T16:18:26.297Z",
+ "checked_at": "2026-09-15T07:53:17.381Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 92,
+ "hours_left": 76,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
@@ -10,34 +10,34 @@
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 512968,
-   "oldest_ts": "2026-09-14T15:15:46.607612Z"
+   "oldest_seq": 960424,
+   "oldest_ts": "2026-09-15T07:16:23.301487Z"
   },
   "evicted": true,
-  "referee_intake_counter": 284398,
+  "referee_intake_counter": 421031,
   "frontier": {
-   "highest_answered_seq": 536870,
-   "matched_pairs": 705,
-   "lag_median_min": 1.9,
-   "lag_p99_min": 36.9,
-   "lag_max_min": 38
+   "highest_answered_seq": 966960,
+   "matched_pairs": 69,
+   "lag_median_min": 27.1,
+   "lag_p99_min": 35.4,
+   "lag_max_min": 35
   },
   "silent_rate": {
-   "settled_records": 9091,
-   "without_receipt": 8728,
-   "pct": 96,
+   "settled_records": 922,
+   "without_receipt": 913,
+   "pct": 99,
    "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
   },
   "ours": [],
   "referee_totals": {
-   "accepted": 1200,
-   "rejected": 2
+   "accepted": 180,
+   "rejected": 1
   }
  },
  "entries": {
-  "submissions_seen": 194,
-  "referee_accepted": 51,
-  "referee_rejected": 143,
+  "submissions_seen": 218,
+  "referee_accepted": 64,
+  "referee_rejected": 147,
   "accepted_ids": [
    "flopdropteam3",
    "bub",
@@ -87,13 +87,41 @@
   "note": "no referee-receipted roster for this game in the window"
  },
  "vote": {
-  "accepted_ballots": 1483,
+  "accepted_ballots": 8502,
   "we_have_voted": false,
   "our_choice": null,
   "standings": [
    {
     "entry_id": "quire",
-    "votes": 1483
+    "votes": 3924
+   },
+   {
+    "entry_id": "aegon",
+    "votes": 631
+   },
+   {
+    "entry_id": "solvarn",
+    "votes": 373
+   },
+   {
+    "entry_id": "syrinx",
+    "votes": 300
+   },
+   {
+    "entry_id": "ponyo",
+    "votes": 188
+   },
+   {
+    "entry_id": "emberwick",
+    "votes": 188
+   },
+   {
+    "entry_id": "ownfleet12",
+    "votes": 185
+   },
+   {
+    "entry_id": "shultz3",
+    "votes": 185
    }
   ]
  }
