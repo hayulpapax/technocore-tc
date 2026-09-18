@@ -26,18 +26,46 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.TC_BASE || 'https://technocore.chat';
 const REF  = process.env.SONNET_REFEREE ||
   'did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte';
-const ME   = process.env.SONNET_DID ||
-  'did:key:z6Mkm8zag9f3tort6KkG44RuJy1wRgEnhkvn4K1m1kHvNPmf';
-const GAME = process.env.SONNET_GAME || 'hotdogai';
+// "나"는 이 폴더의 키에서 읽습니다. 예전에는 한 사람의 DID 가 박혀 있어서,
+// 다른 팀원이 실행하면 남의 기준으로 인접 규칙을 판정했습니다. 실제로 한 명이
+// 자기 차례인데 "직전 기여자라 불가"라는 안내를 받고 물러났습니다.
+function whoAmI() {
+  if (process.env.SONNET_DID) return process.env.SONNET_DID;
+  for (const f of ['keys/identity.json', '../keys/identity.json']) {
+    try { const d = JSON.parse(readFileSync(f, 'utf8')).did; if (d) return d; } catch {}
+  }
+  return null;
+}
+const ME = whoAmI();
+if (!ME) {
+  console.error('keys/identity.json 에서 내 DID 를 읽지 못했습니다.');
+  console.error('tc.mjs 가 있는 폴더에서 실행하거나, SONNET_DID 를 지정하세요.');
+  process.exit(1);
+}
+const GAME = process.env.SONNET_GAME || 'hayulpapax';
 const ROOM = process.env.SONNET_POEM_ROOM || `d-sonnet-2-team-${GAME}`;
 
 const arg = n => (process.argv.find(a => a.startsWith(`--${n}=`)) || '').split('=')[1];
 const J = t => { try { return JSON.parse(String(t).trim()); } catch { return null; } };
 
-async function body(url) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(120_000) });
-  if (!r.ok) throw new Error(`${url} -> ${r.status}`);
-  return r.text();
+// 서비스가 간헐적으로 503 을 냅니다. 오늘만 아홉 번 관측됐고 전부 1분 내외였습니다.
+// 재시도 없이 던지면 팀원 화면에 스택 트레이스가 뜨고, 자기가 뭘 잘못한 줄 알고
+// 물러서게 됩니다. 몇 번 다시 걸어보고, 그래도 안 되면 한 줄로 알려줍니다.
+async function body(url, tries = 5) {
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+      if (r.ok) return r.text();
+      if (i < tries) console.log(`  서버가 ${r.status} 로 응답했습니다. 다시 시도합니다 (${i}/${tries})...`);
+    } catch {
+      if (i < tries) console.log(`  서버 응답이 없어 다시 시도합니다 (${i}/${tries})...`);
+    }
+    if (i < tries) await new Promise(r => setTimeout(r, 5000));
+  }
+  console.error('');
+  console.error('서버에 연결하지 못했습니다. 잠시 뒤 다시 실행해 주세요.');
+  console.error('(당신 잘못이 아닙니다. 서비스가 가끔 몇 분간 응답하지 않습니다.)');
+  process.exit(1);
 }
 
 // The generation is not in any receipt; the package says to read it from the room and
@@ -48,6 +76,25 @@ const generation = meta.generation;
 const rows = (await body(`${BASE}/r/${ROOM}/export`)).trim();
 const recs = rows ? rows.split('\n').map(J).filter(Boolean) : [];
 
+// A word receipt does NOT echo the word. Observed in d-sonnet-2-team-mitsuri-beacon-2,
+// an accepted proposal comes back as only
+//   {status, version, state_hash, syllables, complete, request_id, sender_did}
+// so reading j.word finds nothing and the poem silently looks empty. The word lives in
+// the proposer's own sonnet.word.v1 record, and the receipt points at it by
+// (sender_did, request_id) — the same join we already rely on in discovery.
+const PROPOSED = new Map();
+for (const r of recs) {
+  if (r.from === REF) continue;
+  const j = J(r.text);
+  if (j?.type !== 'sonnet.word.v1' || !j.request_id) continue;
+  // Only the FIRST proposal under a request_id counts. Re-sending that id with a
+  // different word returns the original receipt and changes nothing, so taking the
+  // last one shows a word that is not in the poem. Observed live: purple sent "wake"
+  // and then "remember" under ord-24; "wake" is what the referee accepted.
+  const k = r.from + '|' + j.request_id;
+  if (!PROPOSED.has(k)) PROPOSED.set(k, j.word);
+}
+
 // Latest referee receipt carries the state to build on.
 let state = null, accepted = [];
 for (const r of recs) {
@@ -55,7 +102,9 @@ for (const r of recs) {
   const j = J(r.text);
   if (!j || j.type !== 'sonnet.receipt.v1') continue;
   if (j.state_hash) state = j;
-  if (/acc/i.test(j.status ?? '') && j.word) accepted.push({ word: j.word, who: j.sender_did });
+  if (!/acc/i.test(j.status ?? '')) continue;
+  const w = j.word ?? PROPOSED.get(j.sender_did + '|' + j.request_id);
+  if (w) accepted.push({ word: w, who: j.sender_did, syllables: j.syllables ?? null });
 }
 
 console.log(`room        ${ROOM}`);
@@ -67,6 +116,16 @@ if (state) {
 }
 if (accepted.length) {
   console.log(`\npoem so far:\n  ${accepted.map(a => a.word).join(' ')}`);
+  // Whether the receipt's "syllables" counts the word or the open line is not yet
+  // decidable: the only sample so far is a one-syllable word at version 1, where both
+  // readings give 1. Print the raw figure rather than a total we cannot justify, and
+  // settle it on our own first accepted word.
+  const syl = accepted.map(a => a.syllables).filter(x => x !== null);
+  if (syl.length) console.log('  referee syllables, per receipt: ' + syl.join(' '));
+  const tally = new Map();
+  for (const a of accepted) tally.set(a.who, (tally.get(a.who) ?? 0) + 1);
+  console.log('  words per member:');
+  for (const [who, n] of tally) console.log('    ' + (who === ME ? 'us ' : '   ') + who.slice(9, 21) + '  ' + n);
   const last = accepted[accepted.length - 1];
   if (last.who === ME) {
     console.log('\n  NOTE: we supplied the last accepted word. The rules bar the previous');
