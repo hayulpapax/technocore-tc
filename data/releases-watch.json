@@ -42,5 +42,8 @@
   "technocore-chat@v0.9.5",
   "technocore-chat@v0.9.6",
   "technocore-chat@v0.9.7"
- ]
+ ],
+ "contests": {
+  "technocore-sonnet-challenge": "sonnet-2@2026-09-11T12:00:00Z"
+ }
 }

@@ -113,6 +113,10 @@ const notRun = fromCI ? WATCHES.filter(w => !w.ran) : [];
 const drift    = watch('DRIFT').found;
 const project  = drift && on('DRIFT_PROJECT');
 const releases = watch('RELEASES').found;
+// A contest arrives through the releases watch because that watch already walks the org,
+// but it is not a deployment and must not be announced as one: the deadline that matters
+// is the identity cutoff, which can fall before the contest even opens.
+const newContest = releases && (env('RELEASES_HEADLINE') || '').startsWith('새 대회');
 const tclk     = watch('TCLK').found;
 const guideOff = watch('GUIDE').found;
 const anyNews  = drift || releases || tclk || guideOff || bigMove;
@@ -130,6 +134,7 @@ const headline =
 : sonnetNeedsYou
            ? `소네트 대회: 마감까지 ${sonnet.hours_left}시간인데 아직 투표하지 않았습니다`
 : project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
+: newContest ? `${env('RELEASES_HEADLINE')} — 신원 컷오프부터 확인하십시오`
 : releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
 : drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
 : tclk     ? '우리가 남긴 글에 답글이 달렸습니다'

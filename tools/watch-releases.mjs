@@ -67,8 +67,12 @@ const tagsSeeded = prev?.watches_tags === true;
 
 const seenReleases = new Set(prev?.releases ?? []);
 const seenRepos    = new Set(prev?.repos ?? []);
+// A contest is a dated thing, so it is keyed by repo and compared by value rather than
+// by presence: sonnet-3 replacing sonnet-2 in the same file is the event worth hearing,
+// and a repo that already held a contest would never fire if only its name were seen.
+const seenContests = new Map(Object.entries(prev?.contests ?? {}));
 
-const news = { releases: [], repos: [], version: null };
+const news = { releases: [], repos: [], version: null, contests: [] };
 
 // --- 1 & 2: repositories and their releases ----------------------------------------
 // Listing the org rather than a hardcoded list is the point of signal 2: a repository
@@ -142,6 +146,27 @@ for (const repo of Array.isArray(repos) ? repos : []) {
         : '(tag only — no release notes were published)',
     });
   }
+
+  // --- 4: a contest that has not started yet -----------------------------------
+  // The one signal where being a day late costs the whole thing. sonnet-2 required a
+  // DID proven to exist strictly before the opening instant, so a participant who
+  // heard about it after that instant could not qualify at all — no amount of effort
+  // afterwards recovers it. contest.json carries that cutoff in machine-readable form
+  // and appears in the repository before the contest opens.
+  //
+  // 404 is the ordinary answer for almost every repo, so a miss is not an error path.
+  let contest = null;
+  try {
+    const file = await gh(`/repos/${ORG}/${repo.name}/contents/contest.json`);
+    if (file?.content) contest = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+  } catch { /* no contest.json here */ }
+  if (contest?.contest_id) {
+    const stamp = `${contest.contest_id}@${contest.opening ?? '?'}`;
+    if (seenContests.get(repo.name) !== stamp && !first) {
+      news.contests.push({ repo: repo.name, ...contest });
+    }
+    seenContests.set(repo.name, stamp);
+  }
 }
 for (const n of repoNames) seenRepos.add(n);
 
@@ -169,9 +194,10 @@ writeFileSync(STATE, JSON.stringify({
   live_version: liveVersion,
   repos: [...seenRepos].sort(),
   releases: [...seenReleases].sort(),
+  contests: Object.fromEntries([...seenContests].sort()),
 }, null, 1) + '\n');
 
-const count = news.releases.length + news.repos.length + (news.version ? 1 : 0);
+const count = news.releases.length + news.repos.length + news.contests.length + (news.version ? 1 : 0);
 // A rebuild is not news about flop-labs, but it is news about this watcher: a release
 // that landed while the state was unreadable will never be announced, because reseeding
 // records it as already seen. Say so rather than let the silence pass for a quiet day.
@@ -179,7 +205,7 @@ const report = count > 0 || stateWasCorrupt;
 console.log(first
   ? `${stateWasCorrupt ? 'RESEEDED after a corrupt state file' : 'seeded'}: ` +
     `${seenRepos.size} repos, ${seenReleases.size} releases, live ${liveVersion}`
-  : `${count} new: ${news.releases.length} releases, ${news.repos.length} repos` +
+  : `${count} new: ${news.releases.length} releases, ${news.repos.length} repos, ${news.contests.length} contests` +
     (news.version ? `, live ${news.version.from} -> ${news.version.to}` : ''));
 
 if (process.env.GITHUB_OUTPUT) {
@@ -192,6 +218,52 @@ if (process.env.GITHUB_OUTPUT) {
       '앞으로도 보고되지 않습니다.** 놓친 것이 없는지 직접 확인하세요:', '',
       '- <https://github.com/orgs/flop-labs/repositories>',
       '- <https://github.com/flop-labs/technocore-chat/releases>', '');
+  }
+
+  // Printed before anything else on purpose. A release can be read tomorrow; an
+  // identity cutoff cannot be met tomorrow.
+  if (news.contests.length) {
+    const BT = String.fromCharCode(96);
+    const code = v => BT + v + BT;
+    const kst = iso => { try { return new Date(iso).toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }) + ' KST'; }
+                         catch { return String(iso); } };
+    lines.push('## 새 대회가 열립니다 — 시작 전에 해야 할 일이 있습니다', '',
+      '아래 값은 저장소의 contest.json 을 그대로 읽은 것입니다.', '');
+    for (const c of news.contests) {
+      const url = 'https://github.com/' + ORG + '/' + c.repo;
+      const now = Date.now();
+      const cut = c.identity_cutoff ? Date.parse(c.identity_cutoff) : NaN;
+      const openAt = c.opening ? Date.parse(c.opening) : NaN;
+      const hrs = n => Math.round((n - now) / 3600000);
+      const when = n => hrs(n) > 0 ? hrs(n) + '시간 뒤' : Math.abs(hrs(n)) + '시간 전';
+      lines.push('### [' + c.contest_id + '](' + url + ')', '',
+        '- 시작 ' + code(c.opening ?? '?') +
+          (Number.isFinite(openAt) ? ' (' + kst(c.opening) + ', ' + when(openAt) + ')' : ''),
+        '- 마감 ' + code(c.deadline ?? '?') +
+          (c.deadline ? ' (' + kst(c.deadline) + ')' : ''),
+        '- 상금 ' + (c.prize ?? '?') + ' ' + (c.payment_unit ?? '') +
+          ' · 투표자 풀 ' + (c.voter_pool ?? '?'),
+        '- 주제 ' + (c.theme ?? '(없음)') + ' · 신원 정책 ' + code(c.identity_policy ?? '?'), '');
+      // The whole reason this watch exists.
+      if (Number.isFinite(cut) && cut > now) {
+        lines.push('> **신원 컷오프 ' + code(c.identity_cutoff) + ' — ' + hrs(cut) + '시간 남았습니다 (' + kst(c.identity_cutoff) + ').**',
+          '> 참가할 DID 는 이 시각 **이전에 존재했음이 증명**되어야 합니다.',
+          '> 아직 없다면 지금 만들어 DID 노트를 게시하세요. 컷오프가 지나면 방법이 없습니다.', '');
+      } else if (Number.isFinite(cut)) {
+        lines.push('> 신원 컷오프 ' + code(c.identity_cutoff) + ' 는 이미 지났습니다 (' + kst(c.identity_cutoff) + ').',
+          '> 기존 DID 가 그 이전부터 존재했는지 확인하세요. 새 키로는 참가할 수 없습니다.', '');
+      }
+    }
+    // sonnet-2 에서 실제로 잃은 것: 136표 중 107표가 voter: role/room 으로 거절됐다.
+    lines.push('#### 지난번(sonnet-2)에 늦어서 잃은 것 — 시작 즉시 할 일', '',
+      '1. pre-start DID 확보 확인 (컷오프 이전 존재 증거)',
+      '2. writer 로 등록',
+      '3. **투표자를 따로 모집해 voter 역할로 등록시키기**',
+      '   - 기여자·조직자는 투표할 수 없습니다 (규칙 6)',
+      '   - 투표자도 pre-start DID 여야 합니다',
+      '   - 지난번 우리 표 136개 중 **107개가 voter: role/room 으로 거절**됐습니다.',
+      '     응원해준 사람들이 전부 다른 팀의 작가라 투표 자격이 없었습니다.',
+      '4. 팀 구성(4~8명)과 방 요청', '');
   }
 
   if (news.repos.length) {
@@ -229,7 +301,8 @@ if (process.env.GITHUB_OUTPUT) {
     `news=${report}\n` +
     // The workflow builds an issue title out of this, so it must never be empty — a
     // report with a blank headline arrives as "flop-labs 새 소식 — " and says nothing.
-    `headline=${news.version ? `technocore.chat ${news.version.to}` :
+    `headline=${news.contests.length ? `새 대회 ${news.contests[0].contest_id} — 시작 ${news.contests[0].opening ?? '?'}` :
+                news.version ? `technocore.chat ${news.version.to}` :
                 news.repos.length ? `new repo: ${news.repos[0].name}` :
                 news.releases.length ? `${news.releases[0].repo} ${news.releases[0].tag}` :
                 stateWasCorrupt ? '감시기 상태 파일 손상 — 놓친 소식이 있을 수 있습니다' : ''}\n` +
