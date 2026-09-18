@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-09-17T07:48:59.202Z",
+ "checked_at": "2026-09-18T07:30:34.558Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -8,9 +8,9 @@
    "state": "open",
    "our_last_comment": "2026-09-09T07:58:12Z",
    "we_authored": false,
-   "watermark": "2026-09-16T19:16:27Z",
-   "replies_since_we_joined": 8,
-   "last_reply_at": "2026-09-16T19:16:27Z"
+   "watermark": "2026-09-17T14:39:34Z",
+   "replies_since_we_joined": 10,
+   "last_reply_at": "2026-09-17T14:39:34Z"
   },
   "flop-labs/tclk#78": {
    "repo": "flop-labs/tclk",
@@ -33,6 +33,28 @@
    "watermark": "2026-09-14T01:59:47Z",
    "replies_since_we_joined": 1,
    "last_reply_at": "2026-09-14T01:59:47Z"
+  },
+  "flop-labs/technocore-chat#714": {
+   "repo": "flop-labs/technocore-chat",
+   "title": "/rooms edge copy re-stamps on schedule but its body never refreshes (~35% below origin)",
+   "url": "https://github.com/flop-labs/technocore-chat/issues/714",
+   "state": "open",
+   "our_last_comment": "2026-09-18T01:45:58Z",
+   "we_authored": false,
+   "watermark": "2026-09-18T01:45:58Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": "2026-09-12T18:25:26Z"
+  },
+  "flop-labs/yellowpaper#65": {
+   "repo": "flop-labs/yellowpaper",
+   "title": "votes room: export retains <4h and only rejections are published, so no participant can compute standings",
+   "url": "https://github.com/flop-labs/yellowpaper/issues/65",
+   "state": "open",
+   "our_last_comment": "2026-09-17T14:33:58Z",
+   "we_authored": true,
+   "watermark": "2026-09-17T14:33:58Z",
+   "replies_since_we_joined": 0,
+   "last_reply_at": null
   },
   "flop-labs/yellowpaper#43": {
    "repo": "flop-labs/yellowpaper",
