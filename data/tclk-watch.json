@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-09-18T07:30:34.558Z",
+ "checked_at": "2026-09-19T07:29:02.914Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -39,11 +39,11 @@
    "title": "/rooms edge copy re-stamps on schedule but its body never refreshes (~35% below origin)",
    "url": "https://github.com/flop-labs/technocore-chat/issues/714",
    "state": "open",
-   "our_last_comment": "2026-09-18T01:45:58Z",
+   "our_last_comment": "2026-09-19T04:13:33Z",
    "we_authored": false,
-   "watermark": "2026-09-18T01:45:58Z",
-   "replies_since_we_joined": 0,
-   "last_reply_at": "2026-09-12T18:25:26Z"
+   "watermark": "2026-09-18T08:02:31Z",
+   "replies_since_we_joined": 1,
+   "last_reply_at": "2026-09-18T08:02:31Z"
   },
   "flop-labs/yellowpaper#65": {
    "repo": "flop-labs/yellowpaper",
@@ -85,9 +85,9 @@
    "state": "open",
    "our_last_comment": null,
    "we_authored": true,
-   "watermark": "2026-09-10T23:33:24Z",
-   "replies_since_we_joined": 0,
-   "last_reply_at": null
+   "watermark": "2026-09-19T00:35:01Z",
+   "replies_since_we_joined": 1,
+   "last_reply_at": "2026-09-19T00:35:01Z"
   },
   "flop-labs/yellowpaper#40": {
    "repo": "flop-labs/yellowpaper",

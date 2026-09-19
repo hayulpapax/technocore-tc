@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-18T07:30:39.190Z",
+ "checked_at": "2026-09-19T07:29:07.043Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": 4,
+ "hours_left": -19,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
@@ -10,34 +10,19 @@
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 3679337,
-   "oldest_ts": "2026-09-18T05:37:10.924988Z"
+   "oldest_seq": 4356680,
+   "oldest_ts": "2026-09-19T04:28:43.538056Z"
   },
   "evicted": true,
-  "referee_intake_counter": 898763,
-  "frontier": {
-   "highest_answered_seq": 3692444,
-   "matched_pairs": 1417,
-   "lag_median_min": 6.9,
-   "lag_p99_min": 13.9,
-   "lag_max_min": 14
-  },
-  "silent_rate": {
-   "settled_records": 12269,
-   "without_receipt": 10935,
-   "pct": 89.1,
-   "note": "validly signed registrations older than the worst observed lag with no receipt of any kind"
-  },
-  "ours": [],
+  "referee_intake_counter": 1306038,
   "referee_totals": {
-   "accepted": 4551,
-   "rejected": 41
+   "rejected": 10276
   }
  },
  "entries": {
-  "submissions_seen": 296,
-  "referee_accepted": 81,
-  "referee_rejected": 168,
+  "submissions_seen": 303,
+  "referee_accepted": 85,
+  "referee_rejected": 170,
   "accepted_ids": [
    "flopdropteam3",
    "bub",
