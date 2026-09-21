@@ -91,6 +91,24 @@ const BIG_MOVE = 100_000;
 const move = prev ? last.sharded - prev.sharded : 0;
 const bigMove = Math.abs(move) >= BIG_MOVE;
 
+// The 7-day idle reaper is the standing explanation for a large fall, and until now this
+// file only asserted it. Look it up instead: notes are deleted after 7 days without a
+// write, so the cohort expiring today is the one created a week ago. Matched by calendar
+// date rather than by index because the history has gaps — 08-29 is missing, and counting
+// back seven rows would silently compare the wrong days.
+const TICK = String.fromCharCode(96);
+const RETENTION = TICK + 'retention_seconds: 604800' + TICK;
+const dayBack = (iso, n) => new Date(Date.parse(iso + "T00:00:00Z") - n * 86_400_000)
+  .toISOString().slice(0, 10);
+const weekAgo = (() => {
+  const want = last?.date ? dayBack(last.date, 7) : null;
+  const j = want ? rows.findIndex(r => r.date === want) : -1;
+  if (j < 1) return null;                       // no such row, or nothing before it to diff
+  const span = Math.round(
+    (Date.parse(rows[j].date + "T00:00:00Z") - Date.parse(rows[j - 1].date + "T00:00:00Z")) / 86_400_000);
+  return { date: rows[j].date, move: rows[j].sharded - rows[j - 1].sharded, span };
+})();
+
 // Each watcher reports two things: whether it ran to the end, and whether it found news.
 // They used to be one thing. A watcher that crashed left its variables unset, unset read
 // as "false", and false read as "checked — nothing new", so the page listed the crashed
@@ -218,9 +236,17 @@ if (bigMove) {
     `노트 수가 ${num(prev.sharded)} → ${num(last.sharded)} 로 ${num(Math.abs(d))}개 ` +
     `${d < 0 ? '감소' : '증가'}했습니다. 샤드당 중앙값도 ${num(prev.median)} → ${num(last.median)} 로 ` +
     `같이 움직였으므로, 일부 샤드만의 문제가 아니라 전체에 걸친 변화입니다.`, '',
-    d < 0 ? '노트는 7일간 쓰기가 없으면 삭제됩니다(`retention_seconds: 604800`). ' +
-            '7일 전에 크게 늘었다면 그 물결이 만료된 것과 일치합니다 — 다만 서버가 ' +
-            '그렇게 공지한 것은 아니므로 단정하지는 마십시오.' : '', '');
+    d < 0 ? weekAgo
+      ? `노트는 7일간 쓰기가 없으면 삭제됩니다(${RETENTION}). 오늘 만료될 코호트는 ` +
+        `7일 전에 만들어진 것들입니다 — **${weekAgo.date}** 에는 ` +
+        `${weekAgo.move >= 0 ? '+' : ''}${num(weekAgo.move)}개였습니다` +
+        `${weekAgo.span !== 1 ? ` (그날 수치는 ${weekAgo.span}일치입니다)` : ''}. ` +
+        `오늘 사라진 ${num(Math.abs(d))}개와 나란히 두고 보십시오 — 두 수가 같을 ` +
+        `이유는 없고(그 사이 쓰기가 있었던 노트는 남습니다), 서버가 그렇게 공지한 ` +
+        `것도 아닙니다. 자릿수가 맞으면 만료, 크게 어긋나면 따로 볼 일입니다.`
+      : `노트는 7일간 쓰기가 없으면 삭제됩니다(${RETENTION}). 비교할 7일 전 조사분이 ` +
+        `이력에 없어 대조하지 못했습니다.`
+    : '', '');
 }
 
 if (project || drift) {
