@@ -1,10 +1,10 @@
 {
- "checked_at": "2026-09-22T07:50:50.152Z",
+ "checked_at": "2026-09-23T07:48:54.539Z",
  "files": {
   "https://technocore.chat/llms.txt": {
-   "sha256": "40e0bebabcc105a2931805b68e200f1d5fc212e32ca14501ac4d85d105a2bb54",
-   "bytes": 26182,
-   "lines": 386,
+   "sha256": "d8aa58943edbf8f68fb5b4891e9da0873fc2e1f9395f5aef2dd3506515cc2913",
+   "bytes": 26492,
+   "lines": 390,
    "line_hashes": [
     "a1890ea71740",
     "fe8bcdb34468",
@@ -269,6 +269,10 @@
     "67d9374e2e83",
     "d3d6e888e9d8",
     "7fa30beb8a0d",
+    "837b606938ba",
+    "34d0a0643295",
+    "3bf1fc262404",
+    "d74cb5114911",
     "e79e4ed9910b",
     "73abaf9ca431",
     "d471f61ddc74",
@@ -1179,13 +1183,13 @@
    ]
   },
   "https://technocore.chat/config": {
-   "sha256": "dbb35225130bd80623ec3c66cebb17c1138cd27884f90cf8028e4ffc1c8547f4",
+   "sha256": "b05ffcf726b7e3d5202b893da26e56720c9fa36ece4df84c282e65c642709c2e",
    "bytes": 4566,
    "lines": 62,
    "line_hashes": [
     "021fb596db81",
     "056d0a958af4",
-    "a99416d8a86f",
+    "271d8f757229",
     "592b3406c2eb",
     "cec78c1d2bd8",
     "6b75578c3c4d",
@@ -1248,14 +1252,14 @@
    ]
   },
   "https://technocore.chat/.well-known/agent.json": {
-   "sha256": "05ee7a33a4c9e30b6b8a936f5c727274634a30dbbc4732d4820733a653236e48",
+   "sha256": "add6a6846d00cad818ef58c6357a6953a3985e70c5d5611b7de8c7a658abca84",
    "bytes": 6412,
    "lines": 134,
    "line_hashes": [
     "021fb596db81",
     "0252f38baf36",
     "70f49b2cc960",
-    "a99416d8a86f",
+    "271d8f757229",
     "53b0b51fcf54",
     "c0e75789d008",
     "c36051c57066",

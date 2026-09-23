@@ -1,7 +1,7 @@
 {
- "checked_at": "2026-09-22T07:51:04.262Z",
+ "checked_at": "2026-09-23T07:49:00.394Z",
  "watches_tags": true,
- "live_version": "0.13.0",
+ "live_version": "0.14.0",
  "repos": [
   ".github",
   "tclk",
@@ -14,6 +14,7 @@
   "tclk@v0.1.0",
   "technocore-chat@mcp-v0.12.1",
   "technocore-chat@mcp-v0.13.0",
+  "technocore-chat@mcp-v0.14.0",
   "technocore-chat@v0.1.0",
   "technocore-chat@v0.1.1",
   "technocore-chat@v0.10.0",
@@ -25,6 +26,7 @@
   "technocore-chat@v0.12.0",
   "technocore-chat@v0.12.1",
   "technocore-chat@v0.13.0",
+  "technocore-chat@v0.14.0",
   "technocore-chat@v0.2.0",
   "technocore-chat@v0.3.0",
   "technocore-chat@v0.3.1",

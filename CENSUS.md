@@ -6,20 +6,18 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-09-22T07:50:49.972Z** against service version **0.13.0**.
-
-> **This run is incomplete.** The service returned 503 for the legacy namespace after eight attempts each, so the totals below are a floor, not a count.
+Last measured **2026-09-23T07:48:54.387Z** against service version **0.14.0**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **1,542,138** (100.0%) |
-| legacy path `/kv/did/<16>` | **unreadable** (?%) |
+| current sharded path `/kv/did-<2>/<14>` | **1,480,483** (89.6%) |
+| legacy path `/kv/did/<16>` | **171,880** (10.4%) |
 | per-namespace cap (server-published) | 300,000 |
-| legacy headroom | unreadable |
+| legacy headroom | 128,120 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 5816, median 6023, max 6420 |
-| rooms enumerated / cap | 64,459 / 300,000 |
+| notes per shard | min 5601, median 5786, max 6181 |
+| rooms enumerated / cap | 89,390 / 163,840 |
 
 ![Sharded and legacy DID note counts, every census to date](chart/census-chart.svg)
 
@@ -30,8 +28,8 @@ from that file, so it cannot fall out of step with the numbers on this page.
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **unreadable** against a cap of
-**300,000**, leaving unreadable of headroom.
+namespace currently holds **171,880** against a cap of
+**300,000**, leaving 128,120 of headroom.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -46,7 +44,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The global note store
 
-`/rooms` reports the global note total: **2,983,365 of 5,242,880**.
+`/rooms` reports the global note total: **2,594,584 of 2,621,440**.
 
 There is headroom in the global note store.
 
@@ -61,8 +59,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 6.9 MiB | 8.66 | 22,074 | **42.5 min** |
-| `technocore` | 7.9 MiB | 3.89 | 27,154 | **116.3 min** |
+| `lobby` | 7.8 MiB | 21.53 | 24,682 | **19.1 min** |
+| `technocore` | 5.5 MiB | 3.55 | 19,298 | **90.5 min** |
 
 ## A note on the room count
 
