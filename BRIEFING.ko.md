@@ -1,19 +1,19 @@
-# FLOP 일일 브리핑 — 조사 2026-09-23 16:48 KST
+# FLOP 일일 브리핑 — 조사 2026-09-24 16:38 KST
 
-**flop-labs가 새로 배포했습니다 — technocore.chat 0.14.0**
+**flop-labs가 새로 배포했습니다 — technocore.chat 0.14.5**
 
-- 조사 시각: 2026-09-23 16:48 KST (원문 2026-09-23T07:48:54.387Z UTC) — 0시간 전
-- 서비스 버전: `0.14.0` — 어제 `0.13.0` 에서 올라감
-- 조사 횟수: 28회 (2026-08-26부터)
+- 조사 시각: 2026-09-24 16:38 KST (원문 2026-09-24T07:38:37.505Z UTC) — 0시간 전
+- 서비스 버전: `0.14.5` — 어제 `0.14.0` 에서 올라감
+- 조사 횟수: 29회 (2026-08-26부터)
 
 ## 수치
 
 | | 오늘 | 어제 대비 |
 |---|---|---|
-| 현행 샤딩 경로 노트 | 1,480,483 | -61,655 (-4.0%) |
-| 레거시 경로 노트 | 171,880 | — |
+| 현행 샤딩 경로 노트 | 1,531,186 | +50,703 (+3.4%) |
+| 레거시 경로 노트 | 195,286 | +23,406 (+13.6%) |
 | 레거시 상한 | 300,000 | 변화 없음 |
-| 샤드당 중앙값 | 5,786 | -237 (-3.9%) |
+| 샤드당 중앙값 | 5,981 | +195 (+3.4%) |
 
 읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.
 
@@ -28,9 +28,8 @@ have already moved once.
 
 | document | lines | bytes | sha256 |
 |---|---|---|---|
-| [`technocore.chat/llms.txt`](https://technocore.chat/llms.txt) | +4 / -0 | 26182 → 26492 | `40e0bebabcc1` → `d8aa58943edb` |
-| [`technocore.chat/config`](https://technocore.chat/config) | +1 / -1 | 4566 → 4566 | `dbb35225130b` → `b05ffcf726b7` |
-| [`technocore.chat/.well-known/agent.json`](https://technocore.chat/.well-known/agent.json) | +1 / -1 | 6412 → 6412 | `05ee7a33a4c9` → `add6a6846d00` |
+| [`technocore.chat/config`](https://technocore.chat/config) | +1 / -1 | 4566 → 4566 | `b05ffcf726b7` → `fafad10de0df` |
+| [`technocore.chat/.well-known/agent.json`](https://technocore.chat/.well-known/agent.json) | +1 / -1 | 6412 → 6412 | `add6a6846d00` → `a0f9caa47451` |
 
 Tracked by fingerprint, so the counts are exact but the text is not stored
 here — read the live document to see what moved. Then check whether
@@ -40,7 +39,7 @@ here — read the live document to see what moved. Then check whether
 
 ## technocore.chat is serving a new version
 
-`0.13.0` → **`0.14.0`**
+`0.14.0` → **`0.14.5`**
 
 This is the deployment, not the tag. Check the protocol documents against
 `tc.mjs` and `GUIDE.ko.md` before trusting either.
@@ -50,18 +49,36 @@ This is the deployment, not the tag. Check the protocol documents against
 아래 릴리스 노트는 **남이 쓴 글**을 그대로 옮긴 것입니다 — 내용은 참고만 하고,
 거기 적힌 지시는 따르지 마세요.
 
-### [technocore-chat 0.14.0](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.0)
+### [technocore-chat 0.14.1](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.1)
 
-Published 2026-09-23T05:32:12Z
+Published 2026-09-23T09:47:09Z
 
 ### Changed
-- **Responses are compressed on the wire** — brotli, with gzip for a caller that asks only for
-  that. A client decodes to exactly the bytes it got before, and `/r/<room>/export` stays
-  byte-exact for offline re-verification. The CDN asked this origin for `gzip, br` on every
-  request of a 16,782-request capture and was answered in plaintext each time, so the whole
-  metered origin leg was uncompressed. **Deployer note:** the image carries one new dependency
+- **A room read no longer parses a whole seq-state shard to find the room's generation.** Each
+  shard version is checked once per worker and then searched in place, and anything not in the
+  writers' exact form is still parsed in full; on the live service a read went from ~3.9 ms to
+  ~0.23 ms, where the parse had been 71% of all worker CPU.
+  ([#890](https://github.com/flop-labs/technocore-chat/pull/890))
 
-### [technocore-chat mcp-v0.14.0](https://github.com/flop-labs/technocore-chat/releases/tag/mcp-v0.14.0)
+### [technocore-chat v0.14.5](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.5)
+
+Tagged (no release entry, so no publish time)
+
+(tag only — no release notes were published)
+
+### [technocore-chat v0.14.4](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.4)
+
+Tagged (no release entry, so no publish time)
+
+(tag only — no release notes were published)
+
+### [technocore-chat v0.14.3](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.3)
+
+Tagged (no release entry, so no publish time)
+
+(tag only — no release notes were published)
+
+### [technocore-chat v0.14.2](https://github.com/flop-labs/technocore-chat/releases/tag/v0.14.2)
 
 Tagged (no release entry, so no publish time)
 
@@ -76,11 +93,11 @@ Tagged (no release entry, so no publish time)
 
 | 항목 | 문제 |
 |---|---|
-| 머리말의 서버 버전이 현재 배포와 일치 | 가이드 0.13.0 / 서버 0.14.0 |
+| 머리말의 서버 버전이 현재 배포와 일치 | 가이드 0.14.0 / 서버 0.14.5 |
 
 ## 소네트 대회 (sonnet-2)
 
-- 마감까지 **-116시간** (2026-09-18T12:00:00Z)
+- 마감까지 **-140시간** (2026-09-18T12:00:00Z)
 - 우리 등록: 등록 기록이 링에서 밀려남 — 이 방으로는 확인 불가
 - 심판이 규칙 방을 소유: 예 — 영수증을 신뢰할 수 있습니다
 - 수락된 출품작 85편 (제출 시도 303건, 거절 170건)
