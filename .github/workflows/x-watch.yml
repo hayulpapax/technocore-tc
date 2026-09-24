@@ -1,0 +1,56 @@
+# Watch @flop_labs and @CryptoHayes on X for posts about contests, the testnet or the
+# airdrop, and open an issue when one lands.
+#
+# Separate from the daily watch because the daily run is once a day and GitHub routinely
+# starts it hours late. The last contest admitted only DIDs that existed before it opened,
+# and its successor was announced on X first — "register your agent DID key today" — so a
+# day's lag on this particular kind of post can mean not being able to take part at all.
+#
+# The issue is also the only way the daily routine hears about it: that routine runs where
+# x.com is unreachable, and reads this repository's issue notifications from mail.
+
+name: X watch
+
+on:
+  schedule:
+    - cron: '23 */3 * * *'   # every three hours
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write     # the issue is both the notification and the dedup record
+
+concurrency:
+  group: x-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No continue-on-error: if the source stops answering, this job fails and GitHub
+      # mails the owner. A silent "no news" is the failure this watcher exists to prevent.
+      - name: Read both accounts
+        id: x
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/watch-x.mjs
+
+      - name: Open an issue for new posts
+        if: steps.x.outputs.news == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.x.outputs.summary }}
+          HEADLINE: ${{ steps.x.outputs.headline }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --assignee "$GITHUB_REPOSITORY_OWNER" \
+            --title "X 새 소식 — $HEADLINE" \
+            --body "$SUMMARY"
