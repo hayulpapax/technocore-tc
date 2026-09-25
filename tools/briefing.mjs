@@ -120,6 +120,7 @@ const WATCHES = [
   { key: 'RELEASES', news: 'RELEASES_NEWS',  label: 'flop-labs 조직의 새 릴리스·태그·저장소' },
   { key: 'TCLK',     news: 'TCLK_REPLIED',   label: 'tclk·technocore-chat 에 남긴 글의 답글' },
   { key: 'GUIDE',    news: 'GUIDE_DRIFTED',  label: '한국어 가이드의 수치·동작 주장 (서버와 대조)' },
+  { key: 'YP',       news: 'YP_NEWS',        label: 'flop-labs/yellowpaper 의 파라미터·본문' },
 ];
 // Did this invocation come from the workflow at all? CI sets every *_RAN input, even
 // when a watcher failed and the value is empty. A hand-run regeneration sets none.
@@ -131,13 +132,18 @@ const notRun = fromCI ? WATCHES.filter(w => !w.ran) : [];
 const drift    = watch('DRIFT').found;
 const project  = drift && on('DRIFT_PROJECT');
 const releases = watch('RELEASES').found;
+// The yellowpaper is what the routine's reference table is built from. A moved value there
+// outranks a deployment: on 2026-09-24 D-0440 took genesis supply from 3.5bn to 4.4bn, and
+// nothing said so for a day. A sync that moves only prose is reported, but quietly.
+const ypParams = watch('YP').found && on('YP_PARAMS');
+const ypProse  = watch('YP').found && !ypParams;
 // A contest arrives through the releases watch because that watch already walks the org,
 // but it is not a deployment and must not be announced as one: the deadline that matters
 // is the identity cutoff, which can fall before the contest even opens.
 const newContest = releases && (env('RELEASES_HEADLINE') || '').startsWith('새 대회');
 const tclk     = watch('TCLK').found;
 const guideOff = watch('GUIDE').found;
-const anyNews  = drift || releases || tclk || guideOff || bigMove;
+const anyNews  = drift || releases || watch('YP').found || tclk || guideOff || bigMove;
 const quiet    = !anyNews && notRun.length === 0;
 
 // The headline is what a push notification would carry, so it names the most consequential
@@ -152,8 +158,10 @@ const headline =
 : sonnetNeedsYou
            ? `소네트 대회: 마감까지 ${sonnet.hours_left}시간인데 아직 투표하지 않았습니다`
 : project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
+: ypParams ? `옐로페이퍼 파라미터가 바뀌었습니다 — ${env('YP_HEADLINE') || '변경 확인'}`
 : newContest ? `${env('RELEASES_HEADLINE')} — 신원 컷오프부터 확인하십시오`
 : releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
+: ypProse  ? '옐로페이퍼 본문이 바뀌었습니다 (파라미터 값은 그대로)'
 : drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
 : tclk     ? '우리가 남긴 글에 답글이 달렸습니다'
 : guideOff ? '한국어 가이드가 서버와 어긋납니다 — 공개 문서가 틀린 값을 싣고 있습니다'
@@ -251,6 +259,9 @@ if (bigMove) {
 
 if (project || drift) {
   out.push('## 문서가 바뀌었습니다', '', env('DRIFT_SUMMARY') || '(요약 없음)', '');
+}
+if (watch('YP').found) {
+  out.push(env('YP_SUMMARY') || '## 옐로페이퍼가 바뀌었습니다', '');
 }
 if (releases) {
   out.push('## flop-labs 배포/저장소', '', env('RELEASES_SUMMARY') || '(요약 없음)', '');
