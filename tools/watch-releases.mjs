@@ -239,11 +239,15 @@ if (process.env.GITHUB_OUTPUT) {
       lines.push('### [' + c.contest_id + '](' + url + ')', '',
         '- 시작 ' + code(c.opening ?? '?') +
           (Number.isFinite(openAt) ? ' (' + kst(c.opening) + ', ' + when(openAt) + ')' : ''),
-        '- 마감 ' + code(c.deadline ?? '?') +
-          (c.deadline ? ' (' + kst(c.deadline) + ')' : ''),
-        '- 상금 ' + (c.prize ?? '?') + ' ' + (c.payment_unit ?? '') +
-          ' · 투표자 풀 ' + (c.voter_pool ?? '?'),
-        '- 주제 ' + (c.theme ?? '(없음)') + ' · 신원 정책 ' + code(c.identity_policy ?? '?'), '');
+        // Contests do not share a schema: sonnet-2 had deadline/prize/voter_pool/identity_cutoff,
+        // close-1 has lock/prize_pool/prize_unit/prize_places and no cutoff at all. Read whichever
+        // is present and say so, rather than printing '?' for a field this contest never had.
+        '- 마감 ' + code(c.deadline ?? c.lock ?? '?') +
+          ((c.deadline ?? c.lock) ? ' (' + kst(c.deadline ?? c.lock) + ')' : ''),
+        '- 상금 ' + (c.prize ?? c.prize_pool ?? '?') + ' ' + (c.payment_unit ?? c.prize_unit ?? '') +
+          (c.prize_places ? ' · 상위 ' + c.prize_places + '명' : '') +
+          (c.voter_pool ? ' · 투표자 풀 ' + c.voter_pool : ''),
+        '- 주제 ' + (c.theme ?? c.market ?? '(없음)') + ' · 신원 정책 ' + code(c.identity_policy ?? '?'), '');
       // The whole reason this watch exists.
       if (Number.isFinite(cut) && cut > now) {
         lines.push('> **신원 컷오프 ' + code(c.identity_cutoff) + ' — ' + hrs(cut) + '시간 남았습니다 (' + kst(c.identity_cutoff) + ').**',
@@ -252,18 +256,21 @@ if (process.env.GITHUB_OUTPUT) {
       } else if (Number.isFinite(cut)) {
         lines.push('> 신원 컷오프 ' + code(c.identity_cutoff) + ' 는 이미 지났습니다 (' + kst(c.identity_cutoff) + ').',
           '> 기존 DID 가 그 이전부터 존재했는지 확인하세요. 새 키로는 참가할 수 없습니다.', '');
+      } else {
+        lines.push('> 신원 컷오프가 contest.json 에 없습니다 (신원 정책: ' + code(c.identity_policy ?? '미기재') + ').',
+          '> 지금 참가해도 늦지 않을 수 있습니다. 규칙 문서의 참가 자격 절로 확인하십시오.', '');
       }
     }
-    // sonnet-2 에서 실제로 잃은 것: 136표 중 107표가 voter: role/room 으로 거절됐다.
-    lines.push('#### 지난번(sonnet-2)에 늦어서 잃은 것 — 시작 즉시 할 일', '',
-      '1. pre-start DID 확보 확인 (컷오프 이전 존재 증거)',
-      '2. writer 로 등록',
-      '3. **투표자를 따로 모집해 voter 역할로 등록시키기**',
-      '   - 기여자·조직자는 투표할 수 없습니다 (규칙 6)',
-      '   - 투표자도 pre-start DID 여야 합니다',
-      '   - 지난번 우리 표 136개 중 **107개가 voter: role/room 으로 거절**됐습니다.',
-      '     응원해준 사람들이 전부 다른 팀의 작가라 투표 자격이 없었습니다.',
-      '4. 팀 구성(4~8명)과 방 요청', '');
+    // Not a sonnet checklist: the next contest had different rules entirely (close-1 is a trading
+    // game with no roles, no votes and no cutoff), and a checklist that told readers to 'register
+    // as writer' would have been wrong instructions. What carries over is how to read the rules.
+    lines.push('#### 첫 수를 두기 전에 — 지난 대회에서 배운 것', '',
+      '1. **규칙 문서를 끝까지 읽는다.** 참가 자격, 제출·거래 방법, 심사·순위·상금, 실격 조항까지.',
+      '2. **필수 요건과 심사 기준을 두 목록으로 정리해 확인받는다.** "목표"·"권장"·"자격 요건 아님"으로',
+      '   적힌 것도 심사 기준이다. sonnet-2 에서 각운을 무시했다가 부적격 판정을 받았다.',
+      '3. **신원 조건을 확인한다.** 컷오프가 있으면 그 전에 DID 를 확보해야 한다.',
+      '4. **누가 상대·투표자가 되는지 확인한다.** sonnet-2 에서 우리 표 136개 중 107개가 투표 자격이',
+      '   없는 참가자라 무효였다.', '');
   }
 
   if (news.repos.length) {
