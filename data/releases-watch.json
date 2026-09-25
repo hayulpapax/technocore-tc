@@ -1,11 +1,12 @@
 {
- "checked_at": "2026-09-24T07:38:43.341Z",
+ "checked_at": "2026-09-25T12:38:07.678Z",
  "watches_tags": true,
  "live_version": "0.14.5",
  "repos": [
   ".github",
   "tclk",
   "technocore-chat",
+  "technocore-close-call-challenge",
   "technocore-sonnet-challange",
   "technocore-sonnet-challenge",
   "yellowpaper"
@@ -48,9 +49,11 @@
   "technocore-chat@v0.9.4",
   "technocore-chat@v0.9.5",
   "technocore-chat@v0.9.6",
-  "technocore-chat@v0.9.7"
+  "technocore-chat@v0.9.7",
+  "technocore-close-call-challenge@close-1"
  ],
  "contests": {
+  "technocore-close-call-challenge": "close-1@2026-09-25T12:00:00Z",
   "technocore-sonnet-challenge": "sonnet-2@2026-09-11T12:00:00Z"
  }
 }
