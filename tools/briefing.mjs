@@ -159,7 +159,7 @@ const headline =
            ? `소네트 대회: 마감까지 ${sonnet.hours_left}시간인데 아직 투표하지 않았습니다`
 : project  ? 'flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다'
 : ypParams ? `옐로페이퍼 파라미터가 바뀌었습니다 — ${env('YP_HEADLINE') || '변경 확인'}`
-: newContest ? `${env('RELEASES_HEADLINE')} — 신원 컷오프부터 확인하십시오`
+: newContest ? `${env('RELEASES_HEADLINE')} — 규칙 전문과 심사 기준부터 확인하십시오`
 : releases ? `flop-labs가 새로 배포했습니다 — ${env('RELEASES_HEADLINE') || '릴리스 확인'}`
 : ypProse  ? '옐로페이퍼 본문이 바뀌었습니다 (파라미터 값은 그대로)'
 : drift    ? 'technocore.chat 프로토콜 문서가 바뀌었습니다 — 클라이언트가 틀려질 수 있습니다'
