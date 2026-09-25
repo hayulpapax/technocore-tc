@@ -42,7 +42,7 @@ const daysAgo = n => new Date(now.getTime() - n * 86_400_000);
 // Every watcher reports that it ran, unless a test says otherwise. The default is the
 // happy path because that is what the daily job produces; a test that wants a crashed
 // watcher deletes its RAN variable, which is exactly what a crash leaves behind.
-const ALL_RAN = { DRIFT_RAN: 'true', RELEASES_RAN: 'true', TCLK_RAN: 'true', GUIDE_RAN: 'true' };
+const ALL_RAN = { DRIFT_RAN: 'true', RELEASES_RAN: 'true', TCLK_RAN: 'true', GUIDE_RAN: 'true', YP_RAN: 'true' };
 
 // Two rows so the briefing has a delta to describe.
 const run = async (rows, extraEnv = {}) => {
