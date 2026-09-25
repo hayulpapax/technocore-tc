@@ -91,6 +91,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-releases.mjs
 
+      # The yellowpaper ships as commits to main, not tags, so the releases watch never saw
+      # D-0440 raise the genesis pool from 3.5bn to 4.4bn. continue-on-error for the same
+      # reason as its neighbours: a failed read is reported as unchecked, the census commits.
+      - name: Check the yellowpaper for changed parameters
+        id: yellowpaper
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/watch-yellowpaper.mjs
+
       # The guide claims specific numbers and behaviours. Hold it to the running
       # service rather than to a copy of itself: four figures in the table that tells
       # readers to trust the server had gone stale, and all four were found by hand.
@@ -136,6 +146,11 @@ jobs:
           RELEASES_NEWS: ${{ steps.releases.outputs.news }}
           RELEASES_HEADLINE: ${{ steps.releases.outputs.headline }}
           RELEASES_SUMMARY: ${{ steps.releases.outputs.summary }}
+          YP_RAN: ${{ steps.yellowpaper.outputs.ran }}
+          YP_NEWS: ${{ steps.yellowpaper.outputs.news }}
+          YP_PARAMS: ${{ steps.yellowpaper.outputs.params }}
+          YP_HEADLINE: ${{ steps.yellowpaper.outputs.headline }}
+          YP_SUMMARY: ${{ steps.yellowpaper.outputs.summary }}
           TCLK_RAN: ${{ steps.tclk.outputs.ran }}
           TCLK_REPLIED: ${{ steps.tclk.outputs.replied }}
           TCLK_SUMMARY: ${{ steps.tclk.outputs.summary }}
@@ -183,6 +198,17 @@ jobs:
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --assignee "$GITHUB_REPOSITORY_OWNER" \
             --title "flop-labs 새 소식 — $HEADLINE" \
+            --body "$SUMMARY"
+
+      - name: Open an issue when the yellowpaper moves
+        if: steps.yellowpaper.outputs.news == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.yellowpaper.outputs.summary }}
+          HEADLINE: ${{ steps.yellowpaper.outputs.headline }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --assignee "$GITHUB_REPOSITORY_OWNER" \
+            --title "옐로페이퍼 갱신 — $HEADLINE" \
             --body "$SUMMARY"
 
       - name: Open an issue when the guide drifts
