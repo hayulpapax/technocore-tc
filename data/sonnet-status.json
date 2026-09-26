@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-09-25T12:38:21.286Z",
+ "checked_at": "2026-09-26T07:46:39.424Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": -169,
+ "hours_left": -188,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": true,
  "registration": {
