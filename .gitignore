@@ -10,3 +10,8 @@ docs/
 # platform leaves one behind, and git cannot index a path the OS reserves — it
 # blocks every later `git add -A` until it is ignored.
 nul
+
+# 대회용 추가 키 (close-1 등). identity.json 은 위에서 이미 막지만 nonce 도 올리지 않는다.
+keys-*/
+# 로컬 실행 기록 (ladder 등)
+logs/
