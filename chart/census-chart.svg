@@ -2,9 +2,9 @@
   <rect width="1600" height="900" fill="#0A1128"/>
 
   <text x="128" y="72" font-family="Space Mono, monospace" font-size="15" font-weight="700"
-        letter-spacing="4" fill="#00B4D8">TECHNOCORE.CHAT &#183; DID NOTE CENSUS &#183; 32 CENSUSES, 26 AUG - 27 SEP</text>
+        letter-spacing="4" fill="#00B4D8">TECHNOCORE.CHAT &#183; DID NOTE CENSUS &#183; 33 CENSUSES, 26 AUG - 28 SEP</text>
   <text x="128" y="122" font-family="Space Mono, monospace" font-size="36" font-weight="700"
-        fill="#F5F7FA">3.04M identities on the sharded path</text>
+        fill="#F5F7FA">3.23M identities on the sharded path</text>
 
   <!-- heading row: the label opposite it shares this baseline, which keeps the growth
        figure off the plot however the series ends -->
@@ -14,21 +14,24 @@
     <line x1="128" y1="440.0" x2="1504" y2="440.0" stroke="#232A3E" stroke-width="1"/>
     <text x="112" y="446.0" text-anchor="end" font-family="Space Mono, monospace"
           font-size="16" fill="#5C6670">0</text>
-    <line x1="128" y1="368.6" x2="1504" y2="368.6" stroke="#232A3E" stroke-width="1"/>
-    <text x="112" y="374.6" text-anchor="end" font-family="Space Mono, monospace"
+    <line x1="128" y1="377.5" x2="1504" y2="377.5" stroke="#232A3E" stroke-width="1"/>
+    <text x="112" y="383.5" text-anchor="end" font-family="Space Mono, monospace"
           font-size="16" fill="#5C6670">1.0M</text>
-    <line x1="128" y1="297.1" x2="1504" y2="297.1" stroke="#232A3E" stroke-width="1"/>
-    <text x="112" y="303.1" text-anchor="end" font-family="Space Mono, monospace"
+    <line x1="128" y1="315.0" x2="1504" y2="315.0" stroke="#232A3E" stroke-width="1"/>
+    <text x="112" y="321.0" text-anchor="end" font-family="Space Mono, monospace"
           font-size="16" fill="#5C6670">2.0M</text>
-    <line x1="128" y1="225.7" x2="1504" y2="225.7" stroke="#232A3E" stroke-width="1"/>
-    <text x="112" y="231.7" text-anchor="end" font-family="Space Mono, monospace"
+    <line x1="128" y1="252.5" x2="1504" y2="252.5" stroke="#232A3E" stroke-width="1"/>
+    <text x="112" y="258.5" text-anchor="end" font-family="Space Mono, monospace"
           font-size="16" fill="#5C6670">3.0M</text>
-  <path d="M128.0 434.8 L171.0 420.8 L214.0 412.8 L300.0 382.6 L343.0 374.3 L386.0 334.4 L429.0 323.1 L472.0 321.8 L515.0 296.9 L558.0 301.5 L601.0 291.1 L644.0 291.1 L687.0 315.9 L730.0 329.8 L773.0 329.8 L816.0 343.1 L859.0 343.9 L902.0 332.6 L945.0 319.3 L988.0 304.6 L1031.0 300.4 L1074.0 293.1 L1117.0 290.7 L1160.0 287.0 L1203.0 305.0 L1246.0 314.1 L1289.0 329.8 L1332.0 334.3 L1375.0 330.6 L1418.0 292.0 L1461.0 270.6 L1504.0 222.7 L1504.0 440.0 L128.0 440.0 Z"
+    <line x1="128" y1="190.0" x2="1504" y2="190.0" stroke="#232A3E" stroke-width="1"/>
+    <text x="112" y="196.0" text-anchor="end" font-family="Space Mono, monospace"
+          font-size="16" fill="#5C6670">4.0M</text>
+  <path d="M128.0 435.4 L169.7 423.2 L211.4 416.2 L294.8 389.8 L336.5 382.5 L378.2 347.6 L419.9 337.7 L461.6 336.6 L503.3 314.8 L545.0 318.8 L586.7 309.7 L628.4 309.7 L670.1 331.4 L711.8 343.6 L753.5 343.6 L795.2 355.2 L836.8 355.9 L878.5 346.0 L920.2 334.4 L961.9 321.6 L1003.6 317.9 L1045.3 311.5 L1087.0 309.4 L1128.7 306.1 L1170.4 321.8 L1212.1 329.8 L1253.8 343.6 L1295.5 347.5 L1337.2 344.3 L1378.9 310.5 L1420.6 291.8 L1462.3 249.8 L1504.0 238.3 L1504.0 440.0 L128.0 440.0 Z"
         fill="#00B4D8" fill-opacity="0.12"/>
-  <path d="M128.0 434.8 L171.0 420.8 L214.0 412.8 L300.0 382.6 L343.0 374.3 L386.0 334.4 L429.0 323.1 L472.0 321.8 L515.0 296.9 L558.0 301.5 L601.0 291.1 L644.0 291.1 L687.0 315.9 L730.0 329.8 L773.0 329.8 L816.0 343.1 L859.0 343.9 L902.0 332.6 L945.0 319.3 L988.0 304.6 L1031.0 300.4 L1074.0 293.1 L1117.0 290.7 L1160.0 287.0 L1203.0 305.0 L1246.0 314.1 L1289.0 329.8 L1332.0 334.3 L1375.0 330.6 L1418.0 292.0 L1461.0 270.6 L1504.0 222.7" fill="none" stroke="#00B4D8" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M128.0 435.4 L169.7 423.2 L211.4 416.2 L294.8 389.8 L336.5 382.5 L378.2 347.6 L419.9 337.7 L461.6 336.6 L503.3 314.8 L545.0 318.8 L586.7 309.7 L628.4 309.7 L670.1 331.4 L711.8 343.6 L753.5 343.6 L795.2 355.2 L836.8 355.9 L878.5 346.0 L920.2 334.4 L961.9 321.6 L1003.6 317.9 L1045.3 311.5 L1087.0 309.4 L1128.7 306.1 L1170.4 321.8 L1212.1 329.8 L1253.8 343.6 L1295.5 347.5 L1337.2 344.3 L1378.9 310.5 L1420.6 291.8 L1462.3 249.8 L1504.0 238.3" fill="none" stroke="#00B4D8" stroke-width="3.5" stroke-linejoin="round"/>
   <text x="1504" y="172" text-anchor="end"
         font-family="Space Mono, monospace" font-size="20" font-weight="700" fill="#00B4D8">
-    73,419 &#8594; 3,042,780   &#183;   41×</text>
+    73,419 &#8594; 3,227,659   &#183;   44×</text>
 
   <text x="128" y="540" font-family="Space Mono, monospace" font-size="16" font-weight="700"
         letter-spacing="2" fill="#9AA4B2">LEGACY PATH  /kv/did/&lt;16&gt;   &#183;   AGAINST ITS PUBLISHED CAP</text>
@@ -45,35 +48,35 @@
     <line x1="128" y1="590.0" x2="1504" y2="590.0" stroke="#232A3E" stroke-width="1"/>
     <text x="112" y="596.0" text-anchor="end" font-family="Space Mono, monospace"
           font-size="16" fill="#5C6670">300k</text>
-  <path d="M128.0 745.4 L171.0 745.4 L171.0 739.4 L214.0 739.4 L300.0 739.4 L300.0 691.4 L343.0 691.4 L386.0 691.4 L429.0 691.4 L472.0 691.4 L515.0 691.4 L515.0 671.7 L558.0 671.7 L601.0 671.7 L644.0 671.7 L687.0 671.7 L730.0 671.7 L773.0 671.7 L816.0 671.7 L859.0 671.7 L859.0 620.0 L902.0 620.0 L945.0 620.0 L988.0 620.0 L1031.0 620.0 L1074.0 620.0 L1117.0 620.0 L1160.0 620.0 L1160.0 590.0 L1203.0 590.0 L1246.0 590.0 L1289.0 590.0 L1332.0 590.0 L1375.0 590.0 L1418.0 590.0 L1461.0 590.0 L1504.0 590.0" fill="none" stroke="#5C6670" stroke-width="2.5" stroke-dasharray="7 5"/>
-  <path d="M128.0 745.4 L171.0 739.4 L214.0 739.4 L300.0 711.8 L343.0 709.0 L386.0 707.6 L429.0 691.1 L472.0 691.4 L515.0 685.3 L558.0 671.9 L601.0 671.7 L644.0 671.7 L687.0 671.7 L730.0 672.1 L773.0 671.8 L816.0 674.9 L859.0 666.1 L902.0 620.9 L945.0 620.0 L988.0 620.5 L1031.0 637.8 L1074.0 641.2 L1117.0 634.6 L1160.0 646.7 L1203.0 679.4 L1246.0 674.2 M1332.0 666.9 L1375.0 652.8 L1418.0 657.3 L1461.0 663.3 L1504.0 669.9" fill="none" stroke="#F5F7FA" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M128.0 745.4 L169.7 745.4 L169.7 739.4 L211.4 739.4 L294.8 739.4 L294.8 691.4 L336.5 691.4 L378.2 691.4 L419.9 691.4 L461.6 691.4 L503.3 691.4 L503.3 671.7 L545.0 671.7 L586.7 671.7 L628.4 671.7 L670.1 671.7 L711.8 671.7 L753.5 671.7 L795.2 671.7 L836.8 671.7 L836.8 620.0 L878.5 620.0 L920.2 620.0 L961.9 620.0 L1003.6 620.0 L1045.3 620.0 L1087.0 620.0 L1128.7 620.0 L1128.7 590.0 L1170.4 590.0 L1212.1 590.0 L1253.8 590.0 L1295.5 590.0 L1337.2 590.0 L1378.9 590.0 L1420.6 590.0 L1462.3 590.0 L1504.0 590.0" fill="none" stroke="#5C6670" stroke-width="2.5" stroke-dasharray="7 5"/>
+  <path d="M128.0 745.4 L169.7 739.4 L211.4 739.4 L294.8 711.8 L336.5 709.0 L378.2 707.6 L419.9 691.1 L461.6 691.4 L503.3 685.3 L545.0 671.9 L586.7 671.7 L628.4 671.7 L670.1 671.7 L711.8 672.1 L753.5 671.8 L795.2 674.9 L836.8 666.1 L878.5 620.9 L920.2 620.0 L961.9 620.5 L1003.6 637.8 L1045.3 641.2 L1087.0 634.6 L1128.7 646.7 L1170.4 679.4 L1212.1 674.2 M1295.5 666.9 L1337.2 652.8 L1378.9 657.3 L1420.6 663.3 L1462.3 669.9 L1504.0 679.4" fill="none" stroke="#F5F7FA" stroke-width="3.5" stroke-linejoin="round"/>
   
   <circle cx="128.0" cy="745.4" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="171.0" cy="739.4" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="429.0" cy="691.1" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="472.0" cy="691.4" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="601.0" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="644.0" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
-  <circle cx="687.0" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="169.7" cy="739.4" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="419.9" cy="691.1" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="461.6" cy="691.4" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="586.7" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="628.4" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
+  <circle cx="670.1" cy="671.7" r="7.5" fill="#0A1128" stroke="#00B4D8" stroke-width="3"/>
   
   <text x="128.0" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">08-26</text>
-  <text x="343.0" y="804" text-anchor="middle"
+  <text x="336.5" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">08-31</text>
-  <text x="515.0" y="804" text-anchor="middle"
+  <text x="503.3" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-04</text>
-  <text x="687.0" y="804" text-anchor="middle"
+  <text x="670.1" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-08</text>
-  <text x="859.0" y="804" text-anchor="middle"
+  <text x="836.8" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-12</text>
-  <text x="1031.0" y="804" text-anchor="middle"
+  <text x="1003.6" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-16</text>
-  <text x="1203.0" y="804" text-anchor="middle"
+  <text x="1170.4" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-20</text>
-  <text x="1375.0" y="804" text-anchor="middle"
+  <text x="1337.2" y="804" text-anchor="middle"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-24</text>
   <text x="1504.0" y="804" text-anchor="middle"
-        font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-27</text>
+        font-family="Space Mono, monospace" font-size="16" fill="#5C6670">09-28</text>
   <text x="1504" y="574.0" text-anchor="end"
         font-family="Space Mono, monospace" font-size="16" fill="#5C6670">cap 300,000</text>
 
