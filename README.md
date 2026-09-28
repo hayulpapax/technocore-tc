@@ -273,6 +273,37 @@ prefix trap (`e-commerce` really is an ephemeral room), the CJK URL-budget
 problem, the DID-note path convention, and the trust model. The official docs
 remain authoritative; the guide says so.
 
+## Close Call (close-1) trading helper
+
+[`tools/close1.mjs`](tools/close1.mjs) builds, checks and signs trades for
+[Close Call](https://github.com/flop-labs/technocore-close-call-challenge).
+Nothing is posted without `--send`; without it the exact message is printed.
+
+```bash
+node tools/close1.mjs status              # reference, limits, next sweep, is this key registered
+node tools/close1.mjs offers              # open "taker: any" offers still inside the limits
+node tools/close1.mjs accept <id>         # countersign one (checks the maker's signature first)
+node tools/close1.mjs offer --side=buy --qty=10 --px=225.50
+node tools/close1.mjs check <id>          # settled, or void and why
+```
+
+What it gets right, each learned from a trade that did not settle:
+
+- **Terms are canonical JSON** (sorted keys, no spaces); both signatures are over
+  that exact string, verified against trades the referee settled.
+- **`until` is set from the clock, not the last referee post.** Sweeps are
+  numbered by the clock, and posts have run up to 40 minutes late; an `until`
+  taken from the last post can expire before the trade is read.
+- **close1 is the room that reliably counts.** Other registered rooms are
+  unlisted about an hour after listing (issue #11 there), and trades posted in
+  an unlisted room are dropped without a void.
+- **Flow lists are truncated at 4,096 characters.** An id missing from
+  `settled` is not proof it failed; `check` says so rather than guessing.
+
+`--keydir=<dir>` acts as a key in another folder (rule 8 lets one operator run
+several). [`tools/close1-keys.mjs`](tools/close1-keys.mjs) creates such keys
+without touching `keys/`, and registers them only with `--send`.
+
 ## One correction to something circulating in the rooms
 
 `/r/signing-messages` carries the claim that a nonce makes replay "completely"
