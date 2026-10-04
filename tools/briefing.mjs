@@ -53,8 +53,15 @@ let sonnet = null;
 try {
   sonnet = JSON.parse(readFileSync(join(ROOT, 'data', 'sonnet-status.json'), 'utf8'));
 } catch { /* no contest being tracked */ }
+// A contest whose deadline has passed asks nothing of anyone: no ballot can be cast and a
+// refusal can no longer be answered. The reading file outlives the contest, and
+// referee_owns_rules went false once the rules room was reaped, so from 2026-10-01 this
+// page opened every day with "진행을 멈추고 확인하십시오" about a contest that ended on
+// 2026-09-23 — and the one real change (flop.finance, #58) never reached the headline.
+// null is not "over": null <= 0 is true in JS, so test the type.
+const sonnetOver = !!sonnet && typeof sonnet.hours_left === 'number' && sonnet.hours_left <= 0;
 // Two things need a person: a refusal, and a deadline arriving with no ballot cast.
-const sonnetNeedsYou = sonnet && (
+const sonnetNeedsYou = sonnet && !sonnetOver && (
   (sonnet.registration?.receipt && !/acc/i.test(sonnet.registration.receipt.status ?? '')) ||
   (sonnet.hours_left > 0 && sonnet.hours_left <= 48 && !sonnet.vote?.we_have_voted) ||
   sonnet.referee_owns_rules === false);
@@ -295,8 +302,10 @@ if (sonnet) {
     : '등록 기록이 링에서 밀려남 — 이 방으로는 확인 불가';
 
   out.push(
-    `## 소네트 대회 (${sonnet.contest})`, '',
-    `- 마감까지 **${sonnet.hours_left}시간** (${sonnet.deadline})`,
+    `## 소네트 대회 (${sonnet.contest})${sonnetOver ? ' — 마감됨, 옛 기록입니다' : ''}`, '',
+    sonnetOver
+      ? `- 마감 **${-sonnet.hours_left}시간 전**에 끝남 (${sonnet.deadline}) — 할 일이 없습니다`
+      : `- 마감까지 **${sonnet.hours_left}시간** (${sonnet.deadline})`,
     `- 우리 등록: ${line}`,
     `- 심판이 규칙 방을 소유: ${sonnet.referee_owns_rules ? '예 — 영수증을 신뢰할 수 있습니다' : '**아니오 — 이 대회의 영수증은 증거가 아닙니다**'}`,
     `- 수락된 출품작 ${sonnet.entries?.referee_accepted ?? 0}편 (제출 시도 ${sonnet.entries?.submissions_seen ?? 0}건, 거절 ${sonnet.entries?.referee_rejected ?? 0}건)`,
