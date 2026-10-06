@@ -6,18 +6,18 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-10-05T09:08:43.749Z** against service version **0.14.5**.
+Last measured **2026-10-06T09:02:57.361Z** against service version **0.14.5**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **2,297,829** (97.5%) |
-| legacy path `/kv/did/<16>` | **57,846** (2.5%) |
+| current sharded path `/kv/did-<2>/<14>` | **2,298,691** (97.3%) |
+| legacy path `/kv/did/<16>` | **63,480** (2.7%) |
 | per-namespace cap (server-published) | 300,000 |
-| legacy headroom | 242,154 |
+| legacy headroom | 236,520 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 8730, median 8982, max 9265 |
-| rooms enumerated / cap | 53,578 / 300,000 |
+| notes per shard | min 8688, median 8987, max 9256 |
+| rooms enumerated / cap | 53,507 / 300,000 |
 
 ![Sharded and legacy DID note counts, every census to date](chart/census-chart.svg)
 
@@ -28,8 +28,8 @@ from that file, so it cannot fall out of step with the numbers on this page.
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **57,846** against a cap of
-**300,000**, leaving 242,154 of headroom.
+namespace currently holds **63,480** against a cap of
+**300,000**, leaving 236,520 of headroom.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -44,7 +44,7 @@ both paths for, and it remains the reason to publish on the sharded path.
 
 ## The global note store
 
-`/rooms` reports the global note total: **3,269,159 of 16,777,216**.
+`/rooms` reports the global note total: **3,196,386 of 16,777,216**.
 
 There is headroom in the global note store.
 
@@ -59,8 +59,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 7.7 MiB | 29.46 | 24,606 | **13.9 min** |
-| `technocore` | 5.5 MiB | 4.04 | 18,399 | **76 min** |
+| `lobby` | 6.5 MiB | 28.92 | 21,172 | **12.2 min** |
+| `technocore` | 8.3 MiB | 3.86 | 28,301 | **122.3 min** |
 
 ## A note on the room count
 
