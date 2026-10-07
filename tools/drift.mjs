@@ -45,6 +45,16 @@ const WATCHED = [
   { url: 'https://flop.finance/teaser/',                  group: 'project'  },
   { url: 'https://flop.finance/brand/',                   group: 'project'  },
   { url: 'https://flop.finance/design.md',                group: 'project'  },
+  // The pages that carry the announcement itself. flop.finance/ and /teaser/ were all this
+  // watched until 2026-10-06, when the home page gained /apply/{miner,validator,kol},
+  // /whitepaper/, /testnet/ and /airdrop/ -- the airdrop terms, published for the first
+  // time -- and the daily report could only say "4 lines added": it neither watched the new
+  // pages nor kept the links that led to them.
+  { url: 'https://flop.finance/whitepaper/',              group: 'project'  },
+  { url: 'https://flop.finance/testnet/',                 group: 'project'  },
+  { url: 'https://flop.finance/airdrop/',                 group: 'project'  },
+  { url: 'https://flop.finance/intro/',                   group: 'project'  },
+  { url: 'https://flop.finance/media/',                   group: 'project'  },
 
   // spec — flop-labs/yellowpaper, the definitive FLOP specification. Two files, for two
   // different reasons.
@@ -89,6 +99,23 @@ const normalize = text => text
   .filter(l => !injected(l))
   .join('\n');
 
+// The link targets of an HTML page. A set of paths is a fact about the page's structure
+// rather than its prose, so keeping it redistributes nothing -- and it is what says "a page
+// appeared" where a line count only says "something changed". Fragments and asset paths are
+// noise; internal links are kept as paths so a host rename is not every link moving.
+function linksOf(html, url) {
+  if (!/^\s*</.test(html)) return null;                    // json / markdown: nothing to track
+  const base = new URL(url);
+  const out = new Set();
+  for (const m of html.matchAll(/\bhref="([^"#][^"]*)"/g)) {
+    let u;
+    try { u = new URL(m[1], base); } catch { continue; }
+    if (!/^https?:$/.test(u.protocol) || /^\/(assets|cf-fonts)\//.test(u.pathname)) continue;
+    out.add(u.host === base.host ? u.pathname + u.search : u.origin + u.pathname + u.search);
+  }
+  return [...out].sort();
+}
+
 async function fingerprint(url) {
   // http.mjs hands a 404 back as a response rather than throwing, so a document that
   // has been taken down used to be fingerprinted as whatever the error page said and
@@ -96,10 +123,12 @@ async function fingerprint(url) {
   // a page that moved, and the one this watcher most needs to say plainly.
   const res = await get(url, { label: url });
   if (res.status === 404) return { gone: true, sha256: null, bytes: 0, lines: 0, line_hashes: [] };
-  const text = normalize(await res.text());
+  const raw = await res.text();
+  const text = normalize(raw);
   const lines = text.split('\n');
+  const links = linksOf(raw, url);
   return { sha256: sha(text), bytes: Buffer.byteLength(text, 'utf8'), lines: lines.length,
-           line_hashes: lines.map(lineHash) };
+           line_hashes: lines.map(lineHash), ...(links ? { links } : {}) };
 }
 
 // multiset difference — enough for "N added, M removed" without keeping the text
@@ -115,6 +144,13 @@ function drift(oldHashes = [], newHashes = []) {
   for (const n of bag.values()) removed += n;
   return { added, removed };
 }
+
+// What appeared and what vanished between two link sets. An entry recorded before links
+// were kept has none, and must not report its whole page as new.
+const linkDrift = (before, after) => (!before || !after) ? { gained: [], lost: [] } : {
+  gained: after.filter(l => !before.includes(l)),
+  lost: before.filter(l => !after.includes(l)),
+};
 
 const previous = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : { files: {} };
 const current  = { checked_at: new Date().toISOString(), files: {} };
@@ -140,15 +176,17 @@ for (const { url, group } of WATCHED) {
                              after: fp.sha256.slice(0, 12), bytes_before: 0, bytes_after: fp.bytes });
     continue;
   }
-  if (prev.sha256 === fp.sha256) {
+  const { gained, lost } = linkDrift(prev.links, fp.links);
+  if (prev.sha256 === fp.sha256 && !gained.length && !lost.length) {
     console.log(`  same     [${group}] ${label}`);
     continue;
   }
   const { added, removed } = drift(prev.line_hashes, fp.line_hashes);
-  console.log(`  CHANGED  [${group}] ${label}: +${added}/-${removed} lines, ${prev.bytes} -> ${fp.bytes} bytes`);
+  console.log(`  CHANGED  [${group}] ${label}: +${added}/-${removed} lines, ${prev.bytes} -> ${fp.bytes} bytes`
+    + (gained.length ? `, new links: ${gained.join(' ')}` : '') + (lost.length ? `, links gone: ${lost.join(' ')}` : ''));
   changes.push({ url, label, group, added, removed,
                  before: prev.sha256.slice(0, 12), after: fp.sha256.slice(0, 12),
-                 bytes_before: prev.bytes, bytes_after: fp.bytes });
+                 bytes_before: prev.bytes, bytes_after: fp.bytes, gained, lost });
 }
 
 mkdirSync(DATA, { recursive: true });
@@ -161,6 +199,16 @@ if (process.env.GITHUB_OUTPUT) {
     ? `| [\`${c.label}\`](${c.url}) | **GONE — HTTP 404** | ${c.bytes_before} → 0 | \`${c.before}\` → 404 |`
     : `| [\`${c.label}\`](${c.url}) | +${c.added} / -${c.removed} | ${c.bytes_before} → ${c.bytes_after} | \`${c.before}\` → \`${c.after}\` |`;
   const table = list => ['| document | lines | bytes | sha256 |', '|---|---|---|---|', ...list.map(row)];
+  // Paths that appeared or vanished, named, because "+4 lines" does not tell a reader that a
+  // new page -- or a sign-up form -- now exists. A link to a page this watcher does not yet
+  // follow is marked, so the watch list is extended by the report rather than by luck.
+  const watched = new Set(WATCHED.map(w => new URL(w.url).pathname));
+  const tick = l => '`' + l + '`';
+  const linkLines = list => list.flatMap(c => [
+    ...(c.gained?.length ? ['- **' + tick(c.label) + ' gained links:** ' + c.gained.map(l =>
+        tick(l) + (l.startsWith('/') && !watched.has(l) ? ' (not watched yet)' : '')).join(', ')] : []),
+    ...(c.lost?.length ? ['- **' + tick(c.label) + ' lost links:** ' + c.lost.map(tick).join(', ')] : []),
+  ]);
 
   const spec = changes.filter(c => c.group === 'spec');
   const protocol = changes.filter(c => c.group === 'protocol');
@@ -173,6 +221,7 @@ if (process.env.GITHUB_OUTPUT) {
       'tokenomics are published here, and this is the announcement being waited on.',
       '',
       ...table(project), '',
+      ...(linkLines(project).length ? ['New or removed link targets (structure, not text):', '', ...linkLines(project), ''] : []),
     ] : []),
     ...(spec.length ? [
       '## The yellowpaper mirror moved',
