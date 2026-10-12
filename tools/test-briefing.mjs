@@ -45,9 +45,10 @@ const daysAgo = n => new Date(now.getTime() - n * 86_400_000);
 const ALL_RAN = { DRIFT_RAN: 'true', RELEASES_RAN: 'true', TCLK_RAN: 'true', GUIDE_RAN: 'true', YP_RAN: 'true' };
 
 // Two rows so the briefing has a delta to describe.
-const run = async (rows, extraEnv = {}) => {
+const run = async (rows, extraEnv = {}, sonnetStatus = null) => {
   const out = mkdtempSync(join(tmpdir(), 'tc-brief-'));
   mkdirSync(join(out, 'data'), { recursive: true });
+  if (sonnetStatus) writeFileSync(join(out, 'data', 'sonnet-status.json'), JSON.stringify(sonnetStatus));
   writeFileSync(join(out, 'data', 'census-history.tsv'),
     [HEADER.join('\t'), ...rows].join('\n') + '\n');
   const env = { ...process.env, ...ALL_RAN, ...extraEnv, TC_OUT: out };
@@ -166,6 +167,32 @@ const headlineOf = page => (page.match(/^\*\*(.+)\*\*$/m) || [, '(헤드라인 �
         (page.match(/^\| 레거시 경로 노트.*$/m) || [''])[0]);
   check('그 날은 "전수 조사 결과" 라고 말하지 않는다',
         !page.includes('전수 조사 결과') && page.includes('레거시 네임스페이스를 읽지 못했습니다'));
+}
+
+// --- a contest that has ended must not own the headline ------------------------------
+// From 2026-10-01 the headline read "소네트 대회: 심판이 sonnet-2 규칙 방의 소유자가 아닙니다 —
+// 진행을 멈추고 확인하십시오" every day, for a contest that ended 2026-09-23. It outranked
+// the flop.finance change that opened #58, because the headline names the first thing in a
+// fixed order and the sonnet checks come first.
+{
+  const one = daysAgo(1);
+  const rows = [
+    row(dayOf(one), one.toISOString(), 1_700_000, 6800),
+    row(dayOf(now), now.toISOString(), 1_700_050, 6801),
+  ];
+  const over = { contest: 'sonnet-2', hours_left: -356, deadline: '2026-09-18T12:00:00Z',
+                 referee_owns_rules: false, vote: { we_have_voted: false } };
+  const ended = await run(rows, {}, over);
+  check('마감이 지난 대회는 헤드라인을 차지하지 않는다',
+        !headlineOf(ended.page).includes('소네트'), headlineOf(ended.page));
+  check('마감된 대회 구간은 "마감됨" 이라고 스스로 밝힌다',
+        ended.page.includes('마감됨, 옛 기록입니다') && ended.page.includes('할 일이 없습니다'));
+  const live = await run(rows, {}, { ...over, hours_left: 20 });
+  check('마감 전이면 같은 상태가 여전히 헤드라인에 오른다 — 되돌림 방지',
+        headlineOf(live.page).includes('소네트 대회'), headlineOf(live.page));
+  const unknown = await run(rows, {}, { ...over, hours_left: null });
+  check('마감 시각을 모르면(null) 끝난 것으로 치지 않는다 — null <= 0 은 참이다',
+        headlineOf(unknown.page).includes('소네트 대회'), headlineOf(unknown.page));
 }
 
 console.log(fails ? `\n★ ${fails}건 실패` : '\n전부 통과');
