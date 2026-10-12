@@ -40,9 +40,28 @@ const now = Date.now();
 const kst = ms => new Date(ms + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') + ' KST';
 
 // --- 1. what the accounts posted -------------------------------------------------------
+// fxtwitter answers a profile timeline with a 404 now and then and a 200 a minute later:
+// 8 of the 20 runs from 2026-10-08 to 10-12 failed on "@flop_labs: 404", while twenty
+// back-to-back requests from another network all returned 200. A 404 here is the proxy
+// hiccuping, not the account vanishing, so it gets a few spaced retries before the run
+// fails. A persistent 404 still fails the run -- that is the signal worth seeing.
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function timeline(acct, tries = 4, gapMs = 20_000) {
+  for (let i = 1; ; i++) {
+    try {
+      return await getJson(`https://api.fxtwitter.com/2/profile/${acct}/statuses`, { label: `@${acct}` });
+    } catch (e) {
+      if (i >= tries || !/: 404/.test(e.message)) throw e;
+      process.stderr.write(`  @${acct}: 404 from fxtwitter, try ${i}/${tries} -- waiting ${gapMs / 1000}s
+`);
+      await sleep(gapMs * i);
+    }
+  }
+}
+
 const found = [];
 for (const acct of ACCOUNTS) {
-  const r = await getJson(`https://api.fxtwitter.com/2/profile/${acct}/statuses`, { label: `@${acct}` });
+  const r = await timeline(acct);
   // An empty or reshaped answer must not read as "nothing new": that is exactly the
   // silent failure this watcher exists to prevent.
   if (!Array.isArray(r?.results) || r.results.length === 0) {
