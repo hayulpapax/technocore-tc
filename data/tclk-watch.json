@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-14T07:42:23.005Z",
+ "checked_at": "2026-10-15T07:30:18.864Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -39,7 +39,7 @@
    "title": "/rooms edge copy re-stamps on schedule but its body never refreshes (~35% below origin)",
    "url": "https://github.com/flop-labs/technocore-chat/issues/714",
    "state": "open",
-   "our_last_comment": "2026-09-19T04:13:33Z",
+   "our_last_comment": "2026-10-15T00:47:19Z",
    "we_authored": false,
    "watermark": "2026-10-13T08:13:34Z",
    "replies_since_we_joined": 3,
@@ -91,10 +91,10 @@
   },
   "flop-labs/yellowpaper#40": {
    "repo": "flop-labs/yellowpaper",
-   "title": "ambiguity: validator unbond safety is stated three ways — §15.7 says slash-lock, V11 and Appendix I say margin, and V11's inequality is short by 2 h",
+   "title": "ambiguity (E.57): validator unbond bound — define the validator dispute lifecycle and its start clock (V11 arithmetic fixed in 70e691c)",
    "url": "https://github.com/flop-labs/yellowpaper/issues/40",
    "state": "open",
-   "our_last_comment": null,
+   "our_last_comment": "2026-10-15T00:45:17Z",
    "we_authored": true,
    "watermark": "2026-10-12T09:20:02Z",
    "replies_since_we_joined": 2,
