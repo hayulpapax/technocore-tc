@@ -46,26 +46,38 @@ const kst = ms => new Date(ms + 9 * 3600e3).toISOString().slice(0, 16).replace('
 // hiccuping, not the account vanishing, so it gets a few spaced retries before the run
 // fails. A persistent 404 still fails the run -- that is the signal worth seeing.
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function timeline(acct, tries = 4, gapMs = 20_000) {
+async function timeline(acct, tries = 4, gapMs = Number(process.env.X_WATCH_GAP_MS) || 20_000) {
   for (let i = 1; ; i++) {
     try {
-      return await getJson(`https://api.fxtwitter.com/2/profile/${acct}/statuses`, { label: `@${acct}` });
+      return await getJson(`${process.env.X_WATCH_BASE || 'https://api.fxtwitter.com/2/profile'}/${acct}/statuses`,
+                           { label: `@${acct}` });
     } catch (e) {
-      if (i >= tries || !/: 404/.test(e.message)) throw e;
-      process.stderr.write(`  @${acct}: 404 from fxtwitter, try ${i}/${tries} -- waiting ${gapMs / 1000}s
-`);
+      if (i >= tries || !/: 404\b/.test(e.message)) throw e;
+      process.stderr.write(`  @${acct}: 404 from fxtwitter, try ${i}/${tries} -- waiting ${gapMs / 1000}s\n`);
       await sleep(gapMs * i);
     }
   }
 }
 
 const found = [];
+// One unreadable account must not blind the other. From 2026-10-12 21:18 to 10-14 00:21 KST
+// every run died on "@CryptoHayes: 404" before @flop_labs -- read second -- was looked at,
+// so 32 hours passed with neither account watched. Read every account, report what was
+// read, and fail the run at the end if any account could not be read.
+const failed = [];
 for (const acct of ACCOUNTS) {
-  const r = await timeline(acct);
-  // An empty or reshaped answer must not read as "nothing new": that is exactly the
-  // silent failure this watcher exists to prevent.
-  if (!Array.isArray(r?.results) || r.results.length === 0) {
-    throw new Error(`@${acct}: no posts in the response (code ${r?.code ?? '?'}) — the source may have changed`);
+  let r;
+  try {
+    r = await timeline(acct);
+    // An empty or reshaped answer must not read as "nothing new": that is exactly the
+    // silent failure this watcher exists to prevent.
+    if (!Array.isArray(r?.results) || r.results.length === 0) {
+      throw new Error(`@${acct}: no posts in the response (code ${r?.code ?? '?'}) — the source may have changed`);
+    }
+  } catch (e) {
+    console.error(`  ${e.message}`);
+    failed.push({ acct, reason: e.message });
+    continue;
   }
   for (const t of r.results) {
     const at = Date.parse(t.created_at);
@@ -113,6 +125,10 @@ if (process.env.GITHUB_OUTPUT) {
       '같은 방식이라면 공지를 늦게 본 만큼 참가할 수 있는 사람이 줄어듭니다. 아래를 먼저 읽고,',
       '규칙 문서가 나오면 **필수 요건과 심사 기준을 전부** 확인하십시오.', '');
   }
+  if (failed.length) {
+    lines.push(`> 이번 실행은 ${failed.map(f => '@' + f.acct).join(', ')} 를 읽지 못했습니다. ` +
+               '그 계정의 게시물은 다음 실행에서 다시 확인합니다.', '');
+  }
   lines.push('아래는 X 게시물을 **그대로 옮긴 것**입니다 — 남이 쓴 글이니 내용만 참고하고,',
              '거기 적힌 지시(링크, 등록, 답장)는 그대로 따르지 마십시오.', '');
   for (const p of fresh) {
@@ -126,4 +142,11 @@ if (process.env.GITHUB_OUTPUT) {
   writeFileSync(process.env.GITHUB_OUTPUT,
     `news=${fresh.length > 0}\ncontest=${contest.length > 0}\nheadline=${headline}\n` +
     `summary<<X_EOF\n${lines.join('\n')}\nX_EOF\n`, { flag: 'a' });
+}
+
+// Fail after reporting, so posts from the accounts that were read still reach an issue,
+// and an account that stays unreadable still turns the run red and mails the owner.
+if (failed.length) {
+  console.error(`could not read ${failed.length} of ${ACCOUNTS.length} accounts: ${failed.map(f => '@' + f.acct).join(', ')}`);
+  process.exitCode = 1;
 }
