@@ -43,8 +43,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/watch-x.mjs
 
+      # always(): the read step fails when one account is unreadable, but it still reports
+      # what the other account posted, and that must not be dropped with it.
       - name: Open an issue for new posts
-        if: steps.x.outputs.news == 'true'
+        if: always() && steps.x.outputs.news == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ steps.x.outputs.summary }}
