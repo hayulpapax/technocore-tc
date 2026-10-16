@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-15T07:30:18.864Z",
+ "checked_at": "2026-10-16T07:14:31.587Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -28,11 +28,11 @@
    "title": "Legacy /kv/did namespace has been at its cap since 2026-08-26; each raise refills within a day",
    "url": "https://github.com/flop-labs/technocore-chat/issues/843",
    "state": "open",
-   "our_last_comment": "2026-10-05T01:16:56Z",
+   "our_last_comment": "2026-10-16T00:28:26Z",
    "we_authored": true,
-   "watermark": "2026-09-14T01:59:47Z",
-   "replies_since_we_joined": 1,
-   "last_reply_at": "2026-09-14T01:59:47Z"
+   "watermark": "2026-10-15T13:58:13Z",
+   "replies_since_we_joined": 2,
+   "last_reply_at": "2026-10-15T13:58:13Z"
   },
   "flop-labs/technocore-chat#714": {
    "repo": "flop-labs/technocore-chat",
