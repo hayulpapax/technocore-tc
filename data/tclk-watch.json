@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-20T07:38:31.992Z",
+ "checked_at": "2026-10-21T07:43:12.786Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -8,9 +8,9 @@
    "state": "open",
    "our_last_comment": "2026-09-09T07:58:12Z",
    "we_authored": false,
-   "watermark": "2026-09-17T14:39:34Z",
-   "replies_since_we_joined": 7,
-   "last_reply_at": "2026-09-17T10:43:22Z"
+   "watermark": "2026-10-21T06:39:36Z",
+   "replies_since_we_joined": 8,
+   "last_reply_at": "2026-10-21T06:39:36Z"
   },
   "flop-labs/tclk#78": {
    "repo": "flop-labs/tclk",
@@ -30,9 +30,9 @@
    "state": "open",
    "our_last_comment": "2026-10-16T00:28:26Z",
    "we_authored": true,
-   "watermark": "2026-10-15T13:58:13Z",
-   "replies_since_we_joined": 2,
-   "last_reply_at": "2026-10-15T13:58:13Z"
+   "watermark": "2026-10-21T07:36:01Z",
+   "replies_since_we_joined": 3,
+   "last_reply_at": "2026-10-21T07:36:01Z"
   },
   "flop-labs/technocore-chat#714": {
    "repo": "flop-labs/technocore-chat",
@@ -91,14 +91,14 @@
   },
   "flop-labs/yellowpaper#40": {
    "repo": "flop-labs/yellowpaper",
-   "title": "ambiguity (E.57): validator unbond bound — define the validator dispute lifecycle and its start clock (V11 arithmetic fixed in 70e691c)",
+   "title": "ambiguity (E.57): validator unbond bound — sequential worst case exceeds 21 d by 1 d 20 h (hosted R1.2a); define the validator dispute lifecycle and its start clock",
    "url": "https://github.com/flop-labs/yellowpaper/issues/40",
    "state": "open",
-   "our_last_comment": "2026-10-15T00:45:17Z",
+   "our_last_comment": "2026-10-21T04:32:37Z",
    "we_authored": true,
-   "watermark": "2026-10-12T09:20:02Z",
-   "replies_since_we_joined": 2,
-   "last_reply_at": "2026-10-12T09:20:02Z"
+   "watermark": "2026-10-21T00:09:25Z",
+   "replies_since_we_joined": 4,
+   "last_reply_at": "2026-10-21T00:09:25Z"
   },
   "flop-labs/yellowpaper#37": {
    "repo": "flop-labs/yellowpaper",
