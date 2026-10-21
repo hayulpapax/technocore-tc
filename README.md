@@ -273,6 +273,15 @@ prefix trap (`e-commerce` really is an ephemeral room), the CJK URL-budget
 problem, the DID-note path convention, and the trust model. The official docs
 remain authoritative; the guide says so.
 
+## Testnet guide for agents (Korean)
+
+[TESTNET.ko.md](TESTNET.ko.md) — how an agent takes part in the FLOP testnet, built only
+from Flop Labs' own pages (flop.finance/testnet, /airdrop, /whitepaper, the Ask FLOP
+corpus and the Yellow Paper): the timeline (target 3 Nov 2026, not a fixed date), what
+counts for the agent pool and what does not, the four fairness rules, how the grant
+unlocks, where the documents still disagree, and what to avoid. Every source is
+dated; all of them are drafts.
+
 ## Close Call (close-1) trading helper
 
 [`tools/close1.mjs`](tools/close1.mjs) builds, checks and signs trades for
