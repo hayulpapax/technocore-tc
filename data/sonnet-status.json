@@ -1,8 +1,8 @@
 {
  "contest": "sonnet-2",
- "checked_at": "2026-10-21T07:43:17.575Z",
+ "checked_at": "2026-10-22T07:39:10.551Z",
  "deadline": "2026-09-18T12:00:00Z",
- "hours_left": -788,
+ "hours_left": -812,
  "referee": "did:key:z6MkowHQwsx9xr84WbWN3YCnKutyBnBXkT1ChKY4uEAAMzte",
  "referee_owns_rules": false,
  "registration": {
@@ -10,8 +10,8 @@
   "receipt": null,
   "sent_seq": 95184,
   "window": {
-   "oldest_seq": 4854356,
-   "oldest_ts": "2026-10-20T01:53:28.787697Z"
+   "oldest_seq": 4876627,
+   "oldest_ts": "2026-10-21T10:42:55.096929Z"
   },
   "evicted": true,
   "referee_intake_counter": null,
