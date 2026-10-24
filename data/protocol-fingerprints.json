@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-23T07:35:43.288Z",
+ "checked_at": "2026-10-24T07:20:55.281Z",
  "files": {
   "https://technocore.chat/llms.txt": {
    "sha256": "ae3a86c884c1932a8efe181942a050fd5b5bbbc0093fcaa70a9574bed1ee21d6",
@@ -1393,9 +1393,9 @@
    ]
   },
   "https://flop.finance/": {
-   "sha256": "3b749fe6ffc55c184d92efbfee0aadff6dc98d4819add24ed09efda8e751c65c",
-   "bytes": 16578,
-   "lines": 381,
+   "sha256": "286676eae9012d1323b8cae80352fcfa8f71ddfd16001a26d7e4e1abad400fe5",
+   "bytes": 17059,
+   "lines": 387,
    "line_hashes": [
     "fe26c59e91ac",
     "d3ac25ddc7ba",
@@ -1744,6 +1744,12 @@
     "ebe8386a9a00",
     "ff8db6b0bef3",
     "eee3676d951e",
+    "726a7034034c",
+    "ee6cf30c329c",
+    "e98f6e1cb095",
+    "893234ee9fe3",
+    "1aa2a155d05c",
+    "80a970dcbba1",
     "7dc8d37d8f9f",
     "cb011295be0b",
     "3611aad2c35b",
@@ -1793,6 +1799,7 @@
     "/ja/",
     "/ko/",
     "/media/",
+    "/official/",
     "/pt-BR/",
     "/ru/",
     "/tr/",
