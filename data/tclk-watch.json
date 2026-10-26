@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-25T07:38:29.731Z",
+ "checked_at": "2026-10-26T07:51:16.477Z",
  "threads": {
   "flop-labs/tclk#93": {
    "repo": "flop-labs/tclk",
@@ -49,12 +49,12 @@
    "repo": "flop-labs/yellowpaper",
    "title": "votes room: export retains <4h and only rejections are published, so no participant can compute standings",
    "url": "https://github.com/flop-labs/yellowpaper/issues/65",
-   "state": "open",
+   "state": "closed",
    "our_last_comment": "2026-09-17T14:33:58Z",
    "we_authored": true,
-   "watermark": "2026-10-12T07:41:47Z",
-   "replies_since_we_joined": 1,
-   "last_reply_at": "2026-10-12T07:41:47Z"
+   "watermark": "2026-10-25T16:05:04Z",
+   "replies_since_we_joined": 2,
+   "last_reply_at": "2026-10-25T16:05:04Z"
   },
   "flop-labs/yellowpaper#43": {
    "repo": "flop-labs/yellowpaper",
