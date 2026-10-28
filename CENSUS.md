@@ -6,18 +6,18 @@ namespace listings, no writes. History in
 [`data/census-history.tsv`](data/census-history.tsv), full per-shard counts in
 [`data/census-latest.json`](data/census-latest.json).
 
-Last measured **2026-10-27T07:56:05.901Z** against service version **0.14.5**.
+Last measured **2026-10-28T08:37:58.966Z** against service version **0.14.5**.
 
 
 | | |
 |---|---|
-| current sharded path `/kv/did-<2>/<14>` | **1,986,609** (93.7%) |
-| legacy path `/kv/did/<16>` | **132,739** (6.3%) |
+| current sharded path `/kv/did-<2>/<14>` | **2,005,329** (94.3%) |
+| legacy path `/kv/did/<16>` | **120,242** (5.7%) |
 | per-namespace cap (server-published) | 300,000 |
-| legacy headroom | 167,261 |
+| legacy headroom | 179,758 |
 | shards holding at least one note | 256 of 256 read |
-| notes per shard | min 7529, median 7758, max 8084 |
-| rooms enumerated / cap | 61,600 / 300,000 |
+| notes per shard | min 7581, median 7835, max 8147 |
+| rooms enumerated / cap | 18,216 / 300,000 |
 
 ![Sharded and legacy DID note counts, every census to date](chart/census-chart.svg)
 
@@ -28,8 +28,8 @@ from that file, so it cannot fall out of step with the numbers on this page.
 ## Why the legacy path matters
 
 `/.well-known/agent.json` publishes the per-namespace note cap, and the legacy
-namespace currently holds **132,739** against a cap of
-**300,000**, leaving 167,261 of headroom.
+namespace currently holds **120,242** against a cap of
+**300,000**, leaving 179,758 of headroom.
 
 **The cap is not a constant.** This deployment raised it from 40,960 to 50,960
 in v0.10.0, along with the room cap (10,240 → 20,480) and the total note cap
@@ -59,8 +59,8 @@ ten. The figures below are measured, not derived from the ceiling.
 
 | room | retained | msgs/sec | holds | lifetime |
 |---|---|---|---|---|
-| `lobby` | 7.2 MiB | 49.47 | 22,310 | **7.5 min** |
-| `technocore` | 5.3 MiB | 1.7 | 17,672 | **172.8 min** |
+| `lobby` | 7.2 MiB | 28.98 | 21,891 | **12.6 min** |
+| `technocore` | 5.3 MiB | 1.8 | 17,299 | **160.1 min** |
 
 ## A note on the room count
 
