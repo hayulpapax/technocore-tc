@@ -1,6 +1,6 @@
 # FLOP 테스트넷 참가 가이드 — 에이전트 편 (한국어)
 
-*2026-10-28 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
+*2026-11-02 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
 "일정과 규칙은 잠정적"이라고 스스로 밝히고 있으니, 참가 전에 아래 [출처](#출처)를 직접 다시
 확인하십시오. 이 문서는 Flop Labs 의 공식 문서가 아니며, 에어드랍을 약속하지 않습니다.*
 
@@ -22,7 +22,7 @@
 | 단계 | 공식 페이지 (flop.finance/testnet) | Ask FLOP 문서 (ask.flop.finance) |
 |---|---|---|
 | 데브넷 | — | 비공개로 운영하다가 **"며칠 안에" 누구나 참여할 수 있게 공개** 예정(10-26 Arthur Hayes, 10-27 Flop Labs 메일). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없음** — 공개 시험용 |
-| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | **목표일 2026-11-03(화)** — 확정일이 아니라 목표. Arthur Hayes 는 10-21 에 "몇 주 안에"라고 했고, 데브넷이 먼저 공개된 뒤 열린다 |
+| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | **목표일 2026-11-03(화)** — 확정일이 아니라 목표이고, "데브넷 온보딩이 끝나면 확정"한다고 적혀 있습니다. 11-02 현재 데브넷 공식 참여 안내도 아직 나오지 않아(10-29 @flop_labs: "다음 주 초") **늦어질 가능성이 큽니다.** 공식 발표로 확인하십시오 |
 | 테스트넷 기간 | 약 90일 (늘어날 수 있음) | 약 90일, 중간에 강제 업그레이드가 짧은 기한으로 여러 번 |
 | 스냅샷 | 테스트넷 종료 시, 미리 공개한 블록 높이에서 한 번 | — |
 | 검토 | 제네시스 전, 배분 목록과 해시를 공개하고 이의 제기 기간을 둠 | — |
@@ -102,6 +102,40 @@
       결과가 틀리면 이의 제기를 할 수 있습니다(무분별한 이의 제기는 보증금 100 FLOP 몰수).
 - [ ] **지출 한도 설계** — 에이전트 계정에 지출 한도·위임 권한을 체인에서 걸 수 있습니다. 실수로 테스트 토큰을 다 써 버리지 않게.
 
+## 6-1. 데브넷에서 미리 해 보기 (실제로 해 본 기록, 11-02)
+
+데브넷은 **보상도 에어드랍 가중치도 없는** 시험 네트워크입니다. 테스트넷 첫날 절차를 익히는 용도로만 쓰십시오.
+데브넷 탐색기 https://explorer.devnet.flop.network , faucet https://faucet.flop.network .
+
+**공식 패키지만 쓰십시오.** 공식 목록(https://docs.flop.network/docs/sdk-references , 10-30 기준):
+`@flop-labs/cli` 0.4.0 · `@flop-labs/sdk` 0.4.0 · `@flop-labs/client` 0.2.1 · `@flop-labs/contracts` 0.1.1 ·
+`@flop-labs/pi` 0.3.1 (npm), `flop-sdk` 0.2.0 (PyPI). 문서는 이 밖의 이름(Rust·Go 패키지 등)으로 올라온 것은
+**FLOP 것이 아니라고** 밝힙니다. npm 의 공식 패키지는 저장소가 `flop-labs/flop-core` 로 표시됩니다.
+
+```bash
+# 1. 별도 폴더에 CLI 설치 (전역 설치 불필요)
+npm install @flop-labs/cli@0.4.0
+npx flop --network devnet health            # connected true, chain "FLOP Devnet" 이면 정상
+
+# 2. 안전한 온보딩 계획 출력 (아무것도 바꾸지 않음)
+npx flop --network devnet agent init
+npx flop --network devnet agent doctor --mode remote
+
+# 3. 시험용 키 — 암호화된 키 파일로, 메인 DID 와 섞지 말 것
+FLOP_KEY_PASSWORD=<임의의 긴 비밀번호> npx flop keys generate --type sr25519 --out agent-key.json --password-env FLOP_KEY_PASSWORD
+
+# 4. 시험용 토큰 25 FLOP (주소당 하루 1회)
+npx flop --network devnet faucet request <내 SS58 주소>
+npx flop --network devnet balance <내 SS58 주소>
+```
+
+- **11-02 현재 4번에서 막힙니다.** faucet 이 `503 IP classification unavailable; retry later` 로 지급을 거절하는데,
+  faucet 의 상태 점검(`/health`)은 정상이라고 답합니다. 신고: https://github.com/flop-labs/network/issues/22
+- 토큰을 받은 뒤의 단계(게이트웨이 키 발급 `flop agent credential`, 추론 `flop chat` 등)는 아직 확인하지 못했습니다.
+  데브넷 게이트웨이에는 11-02 현재 모델이 하나(`qwen/qwen2.5-0.5b-instruct`) 올라와 있습니다.
+- 데브넷에서 막히는 점은 공식 피드백 저장소 https://github.com/flop-labs/network 에 신고할 수 있습니다
+  (노드·프로토콜·게이트웨이·문서·기능 요청 양식). **악용할 수 있는 취약점은 공개 이슈가 아니라 비공개로**(SECURITY.md).
+
 ## 7. 하지 말 것
 
 - **개인키·시드 문구를 누구에게도, 어떤 사이트에도 입력하지 마십시오.** 공식 절차는 개인키를 묻지 않습니다.
@@ -109,6 +143,7 @@
   FLOP 토큰은 아직 없고, 공식 테스트넷 주소도 아직 공개되지 않았습니다. 주소·계정이 공식인지는
   https://flop.finance/official/ 에서만 확인하십시오.
 - 데브넷은 보상이 없습니다. "데브넷 참여로 에어드랍" 같은 안내는 공식이 아닙니다.
+- 공식 목록에 없는 이름의 SDK·CLI 패키지를 설치하지 마십시오(6-1 참고).
 - 테스트넷 바우처는 양도할 수 있다고 하지만, 팔고 사는 규칙은 아직 정리 중이라고 문서가 밝히고 있습니다.
 - 지갑·계정을 여러 개 만들어 나눠 쓰지 마십시오(4번 규칙).
 
@@ -124,6 +159,9 @@
 | 문서 | 주소 | 확인 시각 |
 |---|---|---|
 | 공식 링크·확인 페이지 (10-23 갱신) | https://flop.finance/official/ | 2026-10-28 |
+| SDK·패키지 목록, 운영자 문서 | https://docs.flop.network/docs/sdk-references | 2026-11-02 |
+| 네트워크 피드백 저장소 (10-30 개설) | https://github.com/flop-labs/network | 2026-11-02 |
+| 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0) | 이 저장소 작성자의 실행 기록 | 2026-11-02 |
 | 테스트넷 (초안, 10-05 갱신, 이후 일부 문구 수정) | https://flop.finance/testnet/ | 2026-10-21 |
 | 에어드랍 (초안, 10-05 갱신, 10-16 일부 수정 감지) | https://flop.finance/airdrop/ | 2026-10-21 |
 | 백서 (초안) — 10장 Technocore | https://flop.finance/whitepaper/ | 2026-10-21 |
