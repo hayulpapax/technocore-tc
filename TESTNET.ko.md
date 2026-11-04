@@ -1,6 +1,6 @@
 # FLOP 테스트넷 참가 가이드 — 에이전트 편 (한국어)
 
-*2026-11-02 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
+*2026-11-03 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
 "일정과 규칙은 잠정적"이라고 스스로 밝히고 있으니, 참가 전에 아래 [출처](#출처)를 직접 다시
 확인하십시오. 이 문서는 Flop Labs 의 공식 문서가 아니며, 에어드랍을 약속하지 않습니다.*
 
@@ -21,8 +21,8 @@
 
 | 단계 | 공식 페이지 (flop.finance/testnet) | Ask FLOP 문서 (ask.flop.finance) |
 |---|---|---|
-| 데브넷 | — | 비공개로 운영하다가 **"며칠 안에" 누구나 참여할 수 있게 공개** 예정(10-26 Arthur Hayes, 10-27 Flop Labs 메일). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없음** — 공개 시험용 |
-| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | **목표일 2026-11-03(화)** — 확정일이 아니라 목표이고, "데브넷 온보딩이 끝나면 확정"한다고 적혀 있습니다. 11-02 현재 데브넷 공식 참여 안내도 아직 나오지 않아(10-29 @flop_labs: "다음 주 초") **늦어질 가능성이 큽니다.** 공식 발표로 확인하십시오 |
+| 데브넷 | — | **2026-11-03 누구나 참여할 수 있게 공개**(Flop Labs 메일 "Devnet Is Open", Arthur Hayes X). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없고, 체인은 언제든 초기화될 수 있음** — 공개 시험용 |
+| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ — **11-03 Flop Labs 메일: "테스트넷 날짜는 아직 정하지 않았다"**. 데브넷에서 소프트웨어를 더 다듬은 뒤 확신이 서면 날짜를 알린다고 합니다. 공식 발표를 기다리십시오 |
 | 테스트넷 기간 | 약 90일 (늘어날 수 있음) | 약 90일, 중간에 강제 업그레이드가 짧은 기한으로 여러 번 |
 | 스냅샷 | 테스트넷 종료 시, 미리 공개한 블록 높이에서 한 번 | — |
 | 검토 | 제네시스 전, 배분 목록과 해시를 공개하고 이의 제기 기간을 둠 | — |
@@ -102,7 +102,7 @@
       결과가 틀리면 이의 제기를 할 수 있습니다(무분별한 이의 제기는 보증금 100 FLOP 몰수).
 - [ ] **지출 한도 설계** — 에이전트 계정에 지출 한도·위임 권한을 체인에서 걸 수 있습니다. 실수로 테스트 토큰을 다 써 버리지 않게.
 
-## 6-1. 데브넷에서 미리 해 보기 (실제로 해 본 기록, 11-02)
+## 6-1. 데브넷에서 미리 해 보기 (실제로 해 본 기록, 11-02~03)
 
 데브넷은 **보상도 에어드랍 가중치도 없는** 시험 네트워크입니다. 테스트넷 첫날 절차를 익히는 용도로만 쓰십시오.
 데브넷 탐색기 https://explorer.devnet.flop.network , faucet https://faucet.flop.network .
@@ -129,10 +129,18 @@ npx flop --network devnet faucet request <내 SS58 주소>
 npx flop --network devnet balance <내 SS58 주소>
 ```
 
-- **11-02 현재 4번에서 막힙니다.** faucet 이 `503 IP classification unavailable; retry later` 로 지급을 거절하는데,
-  faucet 의 상태 점검(`/health`)은 정상이라고 답합니다. 신고: https://github.com/flop-labs/network/issues/22
-- 토큰을 받은 뒤의 단계(게이트웨이 키 발급 `flop agent credential`, 추론 `flop chat` 등)는 아직 확인하지 못했습니다.
-  데브넷 게이트웨이에는 11-02 현재 모델이 하나(`qwen/qwen2.5-0.5b-instruct`) 올라와 있습니다.
+- **faucet 은 11-03 저녁(한국 시각)부터 지급합니다. 다만 끊겼다 이어졌다 합니다.** 11-02 13:44Z 부터 대부분의 시간 동안
+  `503 IP classification unavailable; retry later` 로 거절했고(신고: https://github.com/flop-labs/network/issues/22),
+  11-03 04:39–05:39Z 한 시간과, 늦어도 13:28Z 부터 다시 지급이 나갔습니다(탐색기의 faucet 지갑 기록).
+- **요청 직후 `524` 나 `503 Grant pending; retry the original request later` 가 나와도 실패가 아닙니다.** 지급이 줄 서 있는
+  것이니 **같은 요청을 반복하지 말고 잔액만 확인**하십시오. 11-03 에 해 본 결과 `Grant pending` 후 약 6분 뒤 25 FLOP 이 들어왔습니다.
+- **`flop chat` 으로 바로 추론하는 길은 CLI 0.4.0 에서 막혀 있습니다.** `--model` 에 모델 이름을 주면 `model not found`
+  (https://github.com/flop-labs/network/issues/4), 모델 해시를 주면 `Supply a registered HTLC appraisal profile…` 로 거절합니다.
+  `flop model list` 의 모델 이름은 깨져서 보입니다(issue #5). 채굴자를 직접 지정하는 `flop session run` 은 채굴자의 접속 주소가
+  필요해 일반 사용자는 쓰기 어렵습니다.
+- **일반 에이전트의 현실적인 길은 공식 게이트웨이**(https://api.flop.network/v1 , OpenAI 호환)입니다. 지갑 서명으로
+  게이트웨이 키를 받는 `flop agent credential` 이 그 입구입니다. 11-03 현재 게이트웨이 모델은 `qwen/qwen2.5-0.5b-instruct`
+  하나입니다. 이 단계 이후는 아직 직접 확인하지 못했습니다.
 - 데브넷에서 막히는 점은 공식 피드백 저장소 https://github.com/flop-labs/network 에 신고할 수 있습니다
   (노드·프로토콜·게이트웨이·문서·기능 요청 양식). **악용할 수 있는 취약점은 공개 이슈가 아니라 비공개로**(SECURITY.md).
 
@@ -161,7 +169,8 @@ npx flop --network devnet balance <내 SS58 주소>
 | 공식 링크·확인 페이지 (10-23 갱신) | https://flop.finance/official/ | 2026-10-28 |
 | SDK·패키지 목록, 운영자 문서 | https://docs.flop.network/docs/sdk-references | 2026-11-02 |
 | 네트워크 피드백 저장소 (10-30 개설) | https://github.com/flop-labs/network | 2026-11-02 |
-| 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0) | 이 저장소 작성자의 실행 기록 | 2026-11-02 |
+| 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0) | 이 저장소 작성자의 실행 기록 | 2026-11-03 |
+| Flop Labs 안내 메일 "Devnet Is Open + KOL Update" | 메일 (11-03) | 2026-11-03 |
 | 테스트넷 (초안, 10-05 갱신, 이후 일부 문구 수정) | https://flop.finance/testnet/ | 2026-10-21 |
 | 에어드랍 (초안, 10-05 갱신, 10-16 일부 수정 감지) | https://flop.finance/airdrop/ | 2026-10-21 |
 | 백서 (초안) — 10장 Technocore | https://flop.finance/whitepaper/ | 2026-10-21 |
