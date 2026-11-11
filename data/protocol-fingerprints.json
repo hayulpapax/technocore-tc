@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-11-10T09:55:19.292Z",
+ "checked_at": "2026-11-11T09:29:36.007Z",
  "files": {
   "https://technocore.chat/llms.txt": {
    "sha256": "ae3a86c884c1932a8efe181942a050fd5b5bbbc0093fcaa70a9574bed1ee21d6",
@@ -1393,8 +1393,8 @@
    ]
   },
   "https://flop.finance/": {
-   "sha256": "286676eae9012d1323b8cae80352fcfa8f71ddfd16001a26d7e4e1abad400fe5",
-   "bytes": 17059,
+   "sha256": "b9d1fb180d19b5ec6211bb04ca85a5f814a45d55f8a275632a08a7c0ccc144b7",
+   "bytes": 17067,
    "lines": 387,
    "line_hashes": [
     "fe26c59e91ac",
@@ -1727,7 +1727,7 @@
     "d904e5230986",
     "e3b0c44298fc",
     "7a6f6879f28c",
-    "b81069a7ef77",
+    "158f69117f0a",
     "83cc609ba0a0",
     "b2d55deb5519",
     "6824ffa680fa",
