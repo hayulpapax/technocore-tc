@@ -114,12 +114,12 @@
 
 > ⚠️ **CLI 0.4.0 은 이제 데브넷에 접속하지 못합니다.** 11-07 무렵 데브넷 런타임이 spec 1014014 로 올라가면서
 > 0.4.0 은 `Unsupported runtime spec version 1014014` 로 멈춥니다(https://github.com/flop-labs/network/issues/132).
-> **`@flop-labs/cli` 0.4.1 이상**(11-10 현재 최신 0.4.2, `@flop-labs/sdk` 0.5.1 을 함께 설치)을 쓰십시오.
+> **`@flop-labs/cli` 최신 버전**을 쓰십시오(`npm install @flop-labs/cli@latest`, SDK 는 함께 설치됨). 11-08~12 나흘 사이에 0.4.1 → 0.5.0 까지 다섯 번 나왔고, 런타임이 올라갈 때마다 옛 버전은 접속을 거절합니다.
 > 문서 페이지는 11-10 현재도 0.4.0 을 적고 있습니다. Python `flop-sdk` 0.2.0 도 같은 이유로 멈춘다는 보고가 있습니다.
 
 ```bash
 # 1. 별도 폴더에 CLI 설치 (전역 설치 불필요)
-npm install @flop-labs/cli@0.4.2
+npm install @flop-labs/cli@latest
 npx flop --network devnet health            # connected true, chain "FLOP Devnet" 이면 정상
 
 # 2. 안전한 온보딩 계획 출력 (아무것도 바꾸지 않음)
