@@ -1,6 +1,6 @@
 # FLOP 테스트넷 참가 가이드 — 에이전트 편 (한국어)
 
-*2026-11-03 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
+*2026-11-10 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
 "일정과 규칙은 잠정적"이라고 스스로 밝히고 있으니, 참가 전에 아래 [출처](#출처)를 직접 다시
 확인하십시오. 이 문서는 Flop Labs 의 공식 문서가 아니며, 에어드랍을 약속하지 않습니다.*
 
@@ -22,7 +22,7 @@
 | 단계 | 공식 페이지 (flop.finance/testnet) | Ask FLOP 문서 (ask.flop.finance) |
 |---|---|---|
 | 데브넷 | — | **2026-11-03 누구나 참여할 수 있게 공개**(Flop Labs 메일 "Devnet Is Open", Arthur Hayes X). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없고, 체인은 언제든 초기화될 수 있음** — 공개 시험용 |
-| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ — **11-03 Flop Labs 메일: "테스트넷 날짜는 아직 정하지 않았다"**. 데브넷에서 소프트웨어를 더 다듬은 뒤 확신이 서면 날짜를 알린다고 합니다. 공식 발표를 기다리십시오 |
+| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ — **11-03 Flop Labs 메일: "테스트넷 날짜는 아직 정하지 않았다"**. 데브넷에서 소프트웨어를 더 다듬은 뒤 확신이 서면 날짜를 알린다고 합니다. 11-07 @flop_labs X 도 "Testnet date to be announced". 공식 발표를 기다리십시오 |
 | 테스트넷 기간 | 약 90일 (늘어날 수 있음) | 약 90일, 중간에 강제 업그레이드가 짧은 기한으로 여러 번 |
 | 스냅샷 | 테스트넷 종료 시, 미리 공개한 블록 높이에서 한 번 | — |
 | 검토 | 제네시스 전, 배분 목록과 해시를 공개하고 이의 제기 기간을 둠 | — |
@@ -102,7 +102,7 @@
       결과가 틀리면 이의 제기를 할 수 있습니다(무분별한 이의 제기는 보증금 100 FLOP 몰수).
 - [ ] **지출 한도 설계** — 에이전트 계정에 지출 한도·위임 권한을 체인에서 걸 수 있습니다. 실수로 테스트 토큰을 다 써 버리지 않게.
 
-## 6-1. 데브넷에서 미리 해 보기 (실제로 해 본 기록, 11-02~03)
+## 6-1. 데브넷에서 미리 해 보기 (실제로 해 본 기록, 11-02~10)
 
 데브넷은 **보상도 에어드랍 가중치도 없는** 시험 네트워크입니다. 테스트넷 첫날 절차를 익히는 용도로만 쓰십시오.
 데브넷 탐색기 https://explorer.devnet.flop.network , faucet https://faucet.flop.network .
@@ -112,9 +112,14 @@
 `@flop-labs/pi` 0.3.1 (npm), `flop-sdk` 0.2.0 (PyPI). 문서는 이 밖의 이름(Rust·Go 패키지 등)으로 올라온 것은
 **FLOP 것이 아니라고** 밝힙니다. npm 의 공식 패키지는 저장소가 `flop-labs/flop-core` 로 표시됩니다.
 
+> ⚠️ **CLI 0.4.0 은 이제 데브넷에 접속하지 못합니다.** 11-07 무렵 데브넷 런타임이 spec 1014014 로 올라가면서
+> 0.4.0 은 `Unsupported runtime spec version 1014014` 로 멈춥니다(https://github.com/flop-labs/network/issues/132).
+> **`@flop-labs/cli` 최신 버전**을 쓰십시오(`npm install @flop-labs/cli@latest`, SDK 는 함께 설치됨). 11-08~12 나흘 사이에 0.4.1 → 0.5.0 까지 다섯 번 나왔고, 런타임이 올라갈 때마다 옛 버전은 접속을 거절합니다.
+> 문서 페이지는 11-10 현재도 0.4.0 을 적고 있습니다. Python `flop-sdk` 0.2.0 도 같은 이유로 멈춘다는 보고가 있습니다.
+
 ```bash
 # 1. 별도 폴더에 CLI 설치 (전역 설치 불필요)
-npm install @flop-labs/cli@0.4.0
+npm install @flop-labs/cli@latest
 npx flop --network devnet health            # connected true, chain "FLOP Devnet" 이면 정상
 
 # 2. 안전한 온보딩 계획 출력 (아무것도 바꾸지 않음)
@@ -134,13 +139,30 @@ npx flop --network devnet balance <내 SS58 주소>
   11-03 04:39–05:39Z 한 시간과, 늦어도 13:28Z 부터 다시 지급이 나갔습니다(탐색기의 faucet 지갑 기록).
 - **요청 직후 `524` 나 `503 Grant pending; retry the original request later` 가 나와도 실패가 아닙니다.** 지급이 줄 서 있는
   것이니 **같은 요청을 반복하지 말고 잔액만 확인**하십시오. 11-03 에 해 본 결과 `Grant pending` 후 약 6분 뒤 25 FLOP 이 들어왔습니다.
-- **`flop chat` 으로 바로 추론하는 길은 CLI 0.4.0 에서 막혀 있습니다.** `--model` 에 모델 이름을 주면 `model not found`
+- **`flop chat` 으로 바로 추론하는 길은 CLI 0.4.0 에서 막혀 있었습니다**(0.4.2 에서는 다시 확인하지 못함). `--model` 에 모델 이름을 주면 `model not found`
   (https://github.com/flop-labs/network/issues/4), 모델 해시를 주면 `Supply a registered HTLC appraisal profile…` 로 거절합니다.
   `flop model list` 의 모델 이름은 깨져서 보입니다(issue #5). 채굴자를 직접 지정하는 `flop session run` 은 채굴자의 접속 주소가
   필요해 일반 사용자는 쓰기 어렵습니다.
 - **일반 에이전트의 현실적인 길은 공식 게이트웨이**(https://api.flop.network/v1 , OpenAI 호환)입니다. 지갑 서명으로
   게이트웨이 키를 받는 `flop agent credential` 이 그 입구입니다. 11-03 현재 게이트웨이 모델은 `qwen/qwen2.5-0.5b-instruct`
-  하나입니다. 이 단계 이후는 아직 직접 확인하지 못했습니다.
+  하나입니다.
+- **게이트웨이 키는 받기도, 쓰기도 아직 어렵습니다** (11-04~05 에 직접 해 본 기록).
+  - `flop agent credential` 은 별도의 등록용 지갑(`~/.flop/devnet-enroll-wallet.json`, **암호화되지 않음**)을 만들고,
+    그 지갑에 1 FLOP 이상이 있어야 합니다.
+  - 하루 등록 한도가 일찍 차서 `503 wallet_enrollment_cap_reached` 가 몇 시간씩 이어졌습니다. 11-04 에는 02:00Z 전에 차서
+    08:10Z 까지 풀리지 않았고, 다음 날 00:10Z(UTC 자정 직후)에 받았습니다(https://github.com/flop-labs/network/issues/28).
+  - PC 시계가 서버보다 조금이라도(0.6초) 늦으면 CLI 가 `invalid enrollment challenge` 로 스스로 거절합니다(issue #34).
+    Windows 시간 동기화를 먼저 해 두십시오.
+  - 받은 키는 할당량 20000, **약 30시간 뒤 만료**됐습니다. 그동안 3시간 동안 5분마다 시도한 추론 36번이 전부
+    `429 gateway channel pool is full`(issue #31) 또는 `503 no admitted miner` 로 거절돼 **한 번도 성공하지 못했습니다.**
+    11-09 에는 성공한 사람도 있어 때에 따라 다릅니다.
+  - **만료된 뒤에는 같은 지갑으로 다시 받을 수 없습니다** (`devnet allowance expired; ask the operator to renew it`).
+    운영자에게 갱신을 요청하는 이슈가 15건 넘게 쌓여 있지만 11-10 현재 답이 없습니다.
+    → **키는 바로 쓸 준비가 된 뒤에 받으십시오.** 한도를 피하려고 지갑을 새로 만드는 것은 권하지 않습니다(4번 규칙과 같은 취지).
+- **게이트웨이로 산 추론이 누구 몫으로 기록되는지는 아직 불분명합니다.** 데브넷 체인 기록을 읽어 본 참가자에 따르면,
+  게이트웨이를 거친 세션의 `agent` 칸에는 돈을 낸 지갑이 아니라 **게이트웨이 중개 계정**이 남습니다(표본 40건 모두).
+  채굴자와 직접 연 세션은 낸 지갑이 그대로 기록됩니다(https://github.com/flop-labs/network/issues/133).
+  테스트넷 스냅샷이 어느 기록을 읽는지는 공식 답이 없습니다. 테스트넷에서 게이트웨이만 쓸지 정하기 전에 이 이슈의 답을 확인하십시오.
 - 데브넷에서 막히는 점은 공식 피드백 저장소 https://github.com/flop-labs/network 에 신고할 수 있습니다
   (노드·프로토콜·게이트웨이·문서·기능 요청 양식). **악용할 수 있는 취약점은 공개 이슈가 아니라 비공개로**(SECURITY.md).
 
@@ -160,6 +182,7 @@ npx flop --network devnet balance <내 SS58 주소>
 - 공식 개시일(11-03 은 목표일), 체인 정보와 faucet 주소
 - 역할별 최소 활동 기준의 수치, 스냅샷 높이
 - 조정 작업·커넥터 기여를 어떻게 인정할지
+- 게이트웨이로 산 추론이 에이전트 몫으로 인정되는지, 누구에게 기록되는지(6-1, network#133)
 - 에이전트 해제 규칙의 최종 확정(문서 간 불일치)
 
 ## 출처
@@ -169,7 +192,9 @@ npx flop --network devnet balance <내 SS58 주소>
 | 공식 링크·확인 페이지 (10-23 갱신) | https://flop.finance/official/ | 2026-10-28 |
 | SDK·패키지 목록, 운영자 문서 | https://docs.flop.network/docs/sdk-references | 2026-11-02 |
 | 네트워크 피드백 저장소 (10-30 개설) | https://github.com/flop-labs/network | 2026-11-02 |
-| 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0) | 이 저장소 작성자의 실행 기록 | 2026-11-03 |
+| 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0, 0.4.2) | 이 저장소 작성자의 실행 기록 | 2026-11-10 |
+| 네트워크 이슈 #28·#31·#132·#133 (등록 한도, 채널 부족, 런타임 spec, 기록 귀속) | https://github.com/flop-labs/network/issues | 2026-11-10 |
+| @flop_labs X "Devnet is out, Testnet date to be announced" | https://x.com/flop_labs/status/2118983608816013660 | 2026-11-07 |
 | Flop Labs 안내 메일 "Devnet Is Open + KOL Update" | 메일 (11-03) | 2026-11-03 |
 | 테스트넷 (초안, 10-05 갱신, 이후 일부 문구 수정) | https://flop.finance/testnet/ | 2026-10-21 |
 | 에어드랍 (초안, 10-05 갱신, 10-16 일부 수정 감지) | https://flop.finance/airdrop/ | 2026-10-21 |
