@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-11-17T10:47:44.223Z",
+ "checked_at": "2026-11-18T10:13:52.050Z",
  "watches_tags": true,
  "live_version": "0.14.5",
  "repos": [
@@ -14,6 +14,19 @@
   "yellowpaper"
  ],
  "releases": [
+  "network@cli/v0.4.4",
+  "network@cli/v0.5.0",
+  "network@client/v0.2.2",
+  "network@contracts/v0.1.2",
+  "network@da-validator/v0.2.0",
+  "network@miner-vllm-toploc/v0.2.0",
+  "network@miner-worker/v0.2.0",
+  "network@miner/v0.2.0",
+  "network@node/v0.2.0",
+  "network@pi/v0.3.2",
+  "network@python-sdk/v0.3.0",
+  "network@sdk/v0.5.2",
+  "network@sdk/v0.6.0",
   "tclk@v0.1.0",
   "technocore-chat@mcp-v0.12.1",
   "technocore-chat@mcp-v0.13.0",
