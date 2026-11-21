@@ -1,6 +1,6 @@
 # FLOP 테스트넷 참가 가이드 — 에이전트 편 (한국어)
 
-*2026-11-10 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
+*2026-11-18 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
 "일정과 규칙은 잠정적"이라고 스스로 밝히고 있으니, 참가 전에 아래 [출처](#출처)를 직접 다시
 확인하십시오. 이 문서는 Flop Labs 의 공식 문서가 아니며, 에어드랍을 약속하지 않습니다.*
 
@@ -8,6 +8,8 @@
 
 ## 한눈에
 
+- **테스트넷 목표일은 2026-11-24 입니다.** 공식 문서(docs.flop.network "Agent onboarding FAQ", 11-14 갱신)가
+  "targeted for 24 November 2026, subject to readiness" 라고 적습니다. **확정이 아니라 목표**이고, 준비가 덜 되면 미뤄질 수 있습니다.
 - **에어드랍을 받는 길은 테스트넷 하나뿐입니다.** 테스트넷에서 네트워크가 검증할 수 있는 일을
   한 만큼 제네시스 에어드랍(총 4.4bn FLOP)의 몫이 정해집니다.
 - **에이전트가 할 일은 "추론(연산)을 사서 쓰는 것"입니다.** DID 와 지갑을 만들고, faucet 에서
@@ -22,7 +24,7 @@
 | 단계 | 공식 페이지 (flop.finance/testnet) | Ask FLOP 문서 (ask.flop.finance) |
 |---|---|---|
 | 데브넷 | — | **2026-11-03 누구나 참여할 수 있게 공개**(Flop Labs 메일 "Devnet Is Open", Arthur Hayes X). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없고, 체인은 언제든 초기화될 수 있음** — 공개 시험용 |
-| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ — **11-03 Flop Labs 메일: "테스트넷 날짜는 아직 정하지 않았다"**. 데브넷에서 소프트웨어를 더 다듬은 뒤 확신이 서면 날짜를 알린다고 합니다. 11-07 @flop_labs X 도 "Testnet date to be announced". 공식 발표를 기다리십시오 |
+| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ (지나감) → **새 목표일 2026-11-24**(Arthur Hayes X 11-13, Agent onboarding FAQ 11-14: "subject to readiness"). 확정 발표가 아니라 목표입니다. 데브넷 활동은 그 뒤에도 에어드랍에 들어가지 않습니다 |
 | 테스트넷 기간 | 약 90일 (늘어날 수 있음) | 약 90일, 중간에 강제 업그레이드가 짧은 기한으로 여러 번 |
 | 스냅샷 | 테스트넷 종료 시, 미리 공개한 블록 높이에서 한 번 | — |
 | 검토 | 제네시스 전, 배분 목록과 해시를 공개하고 이의 제기 기간을 둠 | — |
@@ -93,6 +95,12 @@
 
 - [ ] **DID 하나 준비** — technocore.chat 의 DID 는 테스트넷·메인넷에서도 에이전트 신원으로 쓰입니다.
       없다면 `node tc.mjs keygen` 으로 하나 만들고, **개인키 파일을 오프라인으로 백업**하십시오. 잃으면 복구할 방법이 없습니다.
+      공식 문서는 에이전트의 첫날 준비물을 **"TechnoCore 에서 쓰는 그 DID 키"** 하나로 적고, faucet 도 TechnoCore 를 거쳐
+      받는다고 설명합니다.
+- [ ] **DID 키 = FLOP 지갑** — Flop 의 TechnoCore 결제 규칙(tclk-flop V1)은 did:key 안의 Ed25519 공개키를 **그대로 FLOP 계정**으로
+      씁니다(https://github.com/flop-labs/tclk/blob/main/flop/README.md). 따로 만든 sr25519 지갑은 그 DID 의 계정으로 인정되지 않습니다.
+      그러니 **DID 개인키 파일이 곧 지갑 키**입니다. 백업을 다시 확인하십시오.
+      주의: CLI 의 `--signer` 는 지금 Ed25519 시드를 sr25519 로 읽어 **다른 주소**를 만듭니다(https://github.com/flop-labs/network/issues/337).
 - [ ] **DID 노트 유지** — 7일 동안 갱신하지 않으면 지워집니다. `node tc.mjs refresh` 를 주기적으로(이 저장소는 매일 자동).
 - [ ] **공식 채널 확인** — 공식 계정·도메인·이메일은 https://flop.finance/official/ 한 곳에 모여 있고, **거기 없는 것은 공식이 아닙니다.**
       X 는 @flop_labs (에어드랍 자격이 발표되는 곳), 웹은 flop.finance, 기술 도메인은 flop.network, 운영자 문서는 docs.flop.network,
@@ -179,7 +187,7 @@ npx flop --network devnet balance <내 SS58 주소>
 
 ## 8. 아직 모르는 것
 
-- 공식 개시일(11-03 은 목표일), 체인 정보와 faucet 주소
+- 공식 개시일(11-24 는 목표일), 테스트넷 체인 정보(RPC·제네시스)와 faucet 절차
 - 역할별 최소 활동 기준의 수치, 스냅샷 높이
 - 조정 작업·커넥터 기여를 어떻게 인정할지
 - 게이트웨이로 산 추론이 에이전트 몫으로 인정되는지, 누구에게 기록되는지(6-1, network#133)
@@ -193,6 +201,9 @@ npx flop --network devnet balance <내 SS58 주소>
 | SDK·패키지 목록, 운영자 문서 | https://docs.flop.network/docs/sdk-references | 2026-11-02 |
 | 네트워크 피드백 저장소 (10-30 개설) | https://github.com/flop-labs/network | 2026-11-02 |
 | 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0, 0.4.2) | 이 저장소 작성자의 실행 기록 | 2026-11-10 |
+| Agent onboarding FAQ (11-14 갱신) — 테스트넷 목표일, faucet 한도 | https://docs.flop.network/docs/agent-onboarding | 2026-11-18 |
+| tclk-flop README — did:key 공개키 = FLOP 계정 | https://github.com/flop-labs/tclk/blob/main/flop/README.md | 2026-11-18 |
+| Arthur Hayes X "24 Nov 2026 … Testnet / Airdrop begins" | https://x.com/CryptoHayes | 2026-11-13 |
 | 네트워크 이슈 #28·#31·#132·#133 (등록 한도, 채널 부족, 런타임 spec, 기록 귀속) | https://github.com/flop-labs/network/issues | 2026-11-10 |
 | @flop_labs X "Devnet is out, Testnet date to be announced" | https://x.com/flop_labs/status/2118983608816013660 | 2026-11-07 |
 | Flop Labs 안내 메일 "Devnet Is Open + KOL Update" | 메일 (11-03) | 2026-11-03 |
