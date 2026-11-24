@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-11-23T10:50:28.994Z",
+ "checked_at": "2026-11-24T12:32:45.525Z",
  "files": {
   "https://technocore.chat/llms.txt": {
    "sha256": "ae3a86c884c1932a8efe181942a050fd5b5bbbc0093fcaa70a9574bed1ee21d6",
@@ -4090,8 +4090,8 @@
    ]
   },
   "https://flop.finance/testnet/": {
-   "sha256": "5d791c028a23ed24c7a0d2bbdcd2578e34a17e024e77ab0f6a315afc06d183cc",
-   "bytes": 34673,
+   "sha256": "60cba581549a01149e10e47bd33827d8de358e0f1ec6ad39495edbb49d6387b1",
+   "bytes": 35787,
    "lines": 608,
    "line_hashes": [
     "fe26c59e91ac",
@@ -4548,6 +4548,8 @@
     "4c57a8afdb03",
     "b35e0167d3e4",
     "5249c2a0fd00",
+    "49e2b565bbc6",
+    "dd8a7e9a1ff3",
     "627beac52a9f",
     "ef0ff04629b7",
     "e2c89be1bb5f",
@@ -4620,9 +4622,7 @@
     "d17210abec60",
     "3ed7440ce075",
     "57d99a57d8a7",
-    "bf6e1e5f8373",
-    "22cff112f9c6",
-    "2acc3dcb6c2b",
+    "59f44388738a",
     "58f1546dd212",
     "7cbfff4ca122",
     "8d8598d86c3d",
@@ -4707,7 +4707,6 @@
     "/",
     "/airdrop/",
     "/apply/miner",
-    "/apply/validator",
     "/intro/",
     "/intro/agent/",
     "/intro/miner/",
@@ -4715,8 +4714,13 @@
     "/intro/validator/",
     "/intro/verification/",
     "/intro/yellowpaper/",
+    "/official/",
     "/testnet/",
     "/whitepaper/",
+    "https://docs.flop.network/docs/network-testnet",
+    "https://docs.flop.network/operators?network=testnet",
+    "https://docs.flop.network/testnet-validator-prep/",
+    "https://github.com/flop-labs/network/issues/new?template=operator-application.yml",
     "https://gpus.flop.finance/"
    ]
   },

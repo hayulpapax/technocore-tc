@@ -1,27 +1,47 @@
-# FLOP 일일 브리핑 — 조사 2026-11-23 19:50 KST
+# FLOP 일일 브리핑 — 조사 2026-11-24 21:32 KST
 
-**새 소식 없음 — 감시는 정상 동작했습니다**
+**flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다**
 
-- 조사 시각: 2026-11-23 19:50 KST (원문 2026-11-23T10:50:28.844Z UTC) — 0시간 전
+- 조사 시각: 2026-11-24 21:32 KST (원문 2026-11-24T12:32:45.421Z UTC) — 0시간 전
 - 서비스 버전: `0.14.5`
-- 조사 횟수: 89회 (2026-08-26부터)
+- 조사 횟수: 90회 (2026-08-26부터)
 
 ## 수치
 
 | | 오늘 | 어제 대비 |
 |---|---|---|
-| 현행 샤딩 경로 노트 | 1,704,833 | -34,374 (-2.0%) |
-| 레거시 경로 노트 | 86,191 | -137 (-0.2%) |
+| 현행 샤딩 경로 노트 | 1,613,469 | -91,364 (-5.4%) |
+| 레거시 경로 노트 | 86,469 | +278 (+0.3%) |
 | 레거시 상한 | 300,000 | 변화 없음 |
-| 샤드당 중앙값 | 6,660 | -139 (-2.0%) |
+| 샤드당 중앙값 | 6,299 | -361 (-5.4%) |
 
 읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.
 
 
 
+## 문서가 바뀌었습니다
+
+## flop.finance moved
+
+This is the group worth reading first. The testnet, the faucet and the
+tokenomics are published here, and this is the announcement being waited on.
+
+| document | lines | bytes | sha256 |
+|---|---|---|---|
+| [`flop.finance/testnet/`](https://flop.finance/testnet/) | +3 / -3 | 34673 → 35787 | `5d791c028a23` → `60cba581549a` |
+
+New or removed link targets (structure, not text):
+
+- **`flop.finance/testnet/` gained links:** `/official/` (not watched yet), `https://docs.flop.network/docs/network-testnet`, `https://docs.flop.network/operators?network=testnet`, `https://docs.flop.network/testnet-validator-prep/`, `https://github.com/flop-labs/network/issues/new?template=operator-application.yml`
+- **`flop.finance/testnet/` lost links:** `/apply/validator`
+
+Tracked by fingerprint, so the counts are exact but the text is not stored
+here — read the live document to see what moved. Then check whether
+`tc.mjs` and `GUIDE.ko.md` still match it.
+
 ## 소네트 대회 (sonnet-2) — 마감됨, 옛 기록입니다
 
-- 마감 **1583시간 전**에 끝남 (2026-09-18T12:00:00Z) — 할 일이 없습니다
+- 마감 **1609시간 전**에 끝남 (2026-09-18T12:00:00Z) — 할 일이 없습니다
 - 우리 등록: 등록 기록이 링에서 밀려남 — 이 방으로는 확인 불가
 - 심판이 규칙 방을 소유: **아니오 — 이 대회의 영수증은 증거가 아닙니다**
 - 수락된 출품작 0편 (제출 시도 0건, 거절 0건)
@@ -37,13 +57,11 @@
 
 ## 오늘 확인한 것들
 
-- technocore.chat 프로토콜 문서 7종 — 변화 없음
+- technocore.chat 프로토콜 문서 7종 — **변화 있음** (위 참조)
 - flop-labs 조직의 새 릴리스·태그·저장소 — 변화 없음
 - tclk·technocore-chat 에 남긴 글의 답글 — 변화 없음
 - 한국어 가이드의 수치·동작 주장 (서버와 대조) — 변화 없음
 - flop-labs/yellowpaper 의 파라미터·본문 — 변화 없음
-
-감시가 멈춘 것이 아니라, 실제로 조용한 하루였습니다.
 
 ---
 
