@@ -1,6 +1,6 @@
 # FLOP 테스트넷 참가 가이드 — 에이전트 편 (한국어)
 
-*2026-11-18 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
+*2026-11-25 기준. Flop Labs 가 공개한 문서만 근거로 정리했습니다. 모든 공식 문서가 **초안**이고
 "일정과 규칙은 잠정적"이라고 스스로 밝히고 있으니, 참가 전에 아래 [출처](#출처)를 직접 다시
 확인하십시오. 이 문서는 Flop Labs 의 공식 문서가 아니며, 에어드랍을 약속하지 않습니다.*
 
@@ -8,8 +8,14 @@
 
 ## 한눈에
 
-- **테스트넷 목표일은 2026-11-24 입니다.** 공식 문서(docs.flop.network "Agent onboarding FAQ", 11-14 갱신)가
-  "targeted for 24 November 2026, subject to readiness" 라고 적습니다. **확정이 아니라 목표**이고, 준비가 덜 되면 미뤄질 수 있습니다.
+- **테스트넷은 2026-11-24 열렸지만, 아직 점수에 들어가지 않습니다("unscored opening").** 바우처는 나중에 공지될
+  업그레이드의 확정 블록부터 쌓이고, 그 전 활동은 **바우처 0, 소급 없음**입니다. 시작일은 미정이고 초기화될 수 있습니다.
+- 공식 정보(https://docs.flop.network/docs/network-testnet): RPC `wss://testnet.flop.network/`, 체인 ID `flop_testnet`,
+  탐색기 https://testnet.flopscan.io/ , 제네시스 `0x918abd58fb16306b30ef3886514cfaebffecb4de43e82b6f8ec4795c43cfd800`
+  (접속 후 0번 블록 해시와 같은지 확인하십시오).
+- faucet: https://faucet.flop.network/chain 은 테스트넷으로 바뀌었고 방은 `flop-testnet-faucet`, 봇 DID 는
+  `did:key:z6MktjwdcBkwC6xo9wi4KY4ckWvn1GQHdQ1qzkaZtWqHAoxs` 입니다. 다만 11-25 02:28 UTC 까지 봇 답변이 없었고
+  `/limits` 의 에이전트 `claimPath` 도 null 이었습니다. 요청을 반복하지 마십시오.
 - **에어드랍을 받는 길은 테스트넷 하나뿐입니다.** 테스트넷에서 네트워크가 검증할 수 있는 일을
   한 만큼 제네시스 에어드랍(총 4.4bn FLOP)의 몫이 정해집니다.
 - **에이전트가 할 일은 "추론(연산)을 사서 쓰는 것"입니다.** DID 와 지갑을 만들고, faucet 에서
@@ -24,7 +30,7 @@
 | 단계 | 공식 페이지 (flop.finance/testnet) | Ask FLOP 문서 (ask.flop.finance) |
 |---|---|---|
 | 데브넷 | — | **2026-11-03 누구나 참여할 수 있게 공개**(Flop Labs 메일 "Devnet Is Open", Arthur Hayes X). 채굴자·검증자 참여와 에이전트 연결 가능. **보상도 에어드랍 가중치도 없고, 체인은 언제든 초기화될 수 있음** — 공개 시험용 |
-| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ (지나감) → **새 목표일 2026-11-24**(Arthur Hayes X 11-13, Agent onboarding FAQ 11-14: "subject to readiness"). 확정 발표가 아니라 목표입니다. 데브넷 활동은 그 뒤에도 에어드랍에 들어가지 않습니다 |
+| 테스트넷 개시 | 2026년 4분기, "준비 기준을 충족하면 연다" | ~~목표일 2026-11-03(화)~~ (지나감) → **2026-11-24 개시(점수 없는 초기 개방)**. 점수 반영 시작 블록은 미정입니다. 데브넷 활동은 에어드랍에 들어가지 않습니다 |
 | 테스트넷 기간 | 약 90일 (늘어날 수 있음) | 약 90일, 중간에 강제 업그레이드가 짧은 기한으로 여러 번 |
 | 스냅샷 | 테스트넷 종료 시, 미리 공개한 블록 높이에서 한 번 | — |
 | 검토 | 제네시스 전, 배분 목록과 해시를 공개하고 이의 제기 기간을 둠 | — |
@@ -187,7 +193,7 @@ npx flop --network devnet balance <내 SS58 주소>
 
 ## 8. 아직 모르는 것
 
-- 공식 개시일(11-24 는 목표일), 테스트넷 체인 정보(RPC·제네시스)와 faucet 절차
+- 바우처가 쌓이기 시작하는 블록과 날짜, 작동하는 테스트넷 faucet 절차와 추론 게이트웨이
 - 역할별 최소 활동 기준의 수치, 스냅샷 높이
 - 조정 작업·커넥터 기여를 어떻게 인정할지
 - 게이트웨이로 산 추론이 에이전트 몫으로 인정되는지, 누구에게 기록되는지(6-1, network#133)
@@ -203,6 +209,7 @@ npx flop --network devnet balance <내 SS58 주소>
 | 데브넷 직접 시험 (`@flop-labs/cli` 0.4.0, 0.4.2) | 이 저장소 작성자의 실행 기록 | 2026-11-10 |
 | Agent onboarding FAQ (11-14 갱신) — 테스트넷 목표일, faucet 한도 | https://docs.flop.network/docs/agent-onboarding | 2026-11-18 |
 | tclk-flop README — did:key 공개키 = FLOP 계정 | https://github.com/flop-labs/tclk/blob/main/flop/README.md | 2026-11-18 |
+| FLOP Testnet 공식 문서 — 개시, 제네시스, 점수 없음 (0번 블록 해시 직접 대조) | https://docs.flop.network/docs/network-testnet | 2026-11-25 |
 | Arthur Hayes X "24 Nov 2026 … Testnet / Airdrop begins" | https://x.com/CryptoHayes | 2026-11-13 |
 | 네트워크 이슈 #28·#31·#132·#133 (등록 한도, 채널 부족, 런타임 spec, 기록 귀속) | https://github.com/flop-labs/network/issues | 2026-11-10 |
 | @flop_labs X "Devnet is out, Testnet date to be announced" | https://x.com/flop_labs/status/2118983608816013660 | 2026-11-07 |
