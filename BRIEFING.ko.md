@@ -1,19 +1,19 @@
-# FLOP 일일 브리핑 — 조사 2026-11-24 21:32 KST
+# FLOP 일일 브리핑 — 조사 2026-11-25 20:22 KST
 
 **flop.finance 페이지가 바뀌었습니다 — 테스트넷·faucet·에어드랍이 올라오는 곳입니다**
 
-- 조사 시각: 2026-11-24 21:32 KST (원문 2026-11-24T12:32:45.421Z UTC) — 0시간 전
+- 조사 시각: 2026-11-25 20:22 KST (원문 2026-11-25T11:22:14.223Z UTC) — 0시간 전
 - 서비스 버전: `0.14.5`
-- 조사 횟수: 90회 (2026-08-26부터)
+- 조사 횟수: 91회 (2026-08-26부터)
 
 ## 수치
 
 | | 오늘 | 어제 대비 |
 |---|---|---|
-| 현행 샤딩 경로 노트 | 1,613,469 | -91,364 (-5.4%) |
-| 레거시 경로 노트 | 86,469 | +278 (+0.3%) |
+| 현행 샤딩 경로 노트 | 1,636,242 | +22,773 (+1.4%) |
+| 레거시 경로 노트 | 96,741 | +10,272 (+11.9%) |
 | 레거시 상한 | 300,000 | 변화 없음 |
-| 샤드당 중앙값 | 6,299 | -361 (-5.4%) |
+| 샤드당 중앙값 | 6,387 | +88 (+1.4%) |
 
 읽기 실패한 샤드 없음 — 위 수치는 전수 조사 결과입니다.
 
@@ -28,12 +28,12 @@ tokenomics are published here, and this is the announcement being waited on.
 
 | document | lines | bytes | sha256 |
 |---|---|---|---|
-| [`flop.finance/testnet/`](https://flop.finance/testnet/) | +3 / -3 | 34673 → 35787 | `5d791c028a23` → `60cba581549a` |
+| [`flop.finance/testnet/`](https://flop.finance/testnet/) | +30 / -23 | 35787 → 36255 | `60cba581549a` → `0939302b8cb7` |
 
 New or removed link targets (structure, not text):
 
-- **`flop.finance/testnet/` gained links:** `/official/` (not watched yet), `https://docs.flop.network/docs/network-testnet`, `https://docs.flop.network/operators?network=testnet`, `https://docs.flop.network/testnet-validator-prep/`, `https://github.com/flop-labs/network/issues/new?template=operator-application.yml`
-- **`flop.finance/testnet/` lost links:** `/apply/validator`
+- **`flop.finance/testnet/` gained links:** `https://github.com/flop-labs/network/issues/new?template=model-upload-sponsorship.yml`, `https://testnet.flopscan.io/`
+- **`flop.finance/testnet/` lost links:** `/official/`, `https://docs.flop.network/docs/network-testnet`, `https://docs.flop.network/testnet-validator-prep/`
 
 Tracked by fingerprint, so the counts are exact but the text is not stored
 here — read the live document to see what moved. Then check whether
@@ -41,7 +41,7 @@ here — read the live document to see what moved. Then check whether
 
 ## 소네트 대회 (sonnet-2) — 마감됨, 옛 기록입니다
 
-- 마감 **1609시간 전**에 끝남 (2026-09-18T12:00:00Z) — 할 일이 없습니다
+- 마감 **1631시간 전**에 끝남 (2026-09-18T12:00:00Z) — 할 일이 없습니다
 - 우리 등록: 등록 기록이 링에서 밀려남 — 이 방으로는 확인 불가
 - 심판이 규칙 방을 소유: **아니오 — 이 대회의 영수증은 증거가 아닙니다**
 - 수락된 출품작 0편 (제출 시도 0건, 거절 0건)
