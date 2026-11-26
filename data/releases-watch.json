@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-11-25T11:22:26.807Z",
+ "checked_at": "2026-11-26T10:57:56.999Z",
  "watches_tags": true,
  "live_version": "0.14.5",
  "repos": [
@@ -27,6 +27,7 @@
   "network@python-sdk/v0.3.0",
   "network@sdk/v0.5.2",
   "network@sdk/v0.6.0",
+  "network@testnet/v0.1.0-early.1",
   "tclk@v0.1.0",
   "technocore-chat@mcp-v0.12.1",
   "technocore-chat@mcp-v0.13.0",
